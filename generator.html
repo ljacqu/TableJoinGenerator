@@ -12,24 +12,48 @@
         .prev {
             color: #ccc;
         }
+        td {
+            padding: 1em;
+            vertical-align: top;
+        }
+        #side {
+            min-width: 200px;
+            overflow: scroll;
+        }
+        #result {
+            border: 1px solid #333;
+            background-color: #eee;
+            padding: 2em;
+        }
+        #result:empty {
+            display: none;
+        }
+        #tables {
+            margin-bottom: 1em;
+        }
     </style>
 </head>
 <body>
-<div>
-    <div id="tables"></div>
-    <button type="reset" onclick="createInitialTables();">Reset</button>
-</div>
-
-<pre id="result"></pre>
+<table>
+    <tr>
+        <td id="side">
+            <div id="tables"></div>
+            <button onclick="createInitialTables();">Reset</button>
+        </td>
+        <td>
+            <pre id="result"></pre>
+        </td>
+    </tr>
+</table>
 
 <script>
-let __query = {};
+let __query = null;
 
 function createInitialTables() {
     document.getElementById('result').innerText = '';
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '';
-    __query = {};
+    __query = null;
 
     for (const table in __tables) {
         const btn = document.createElement('button');
@@ -159,6 +183,10 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
 }
 
 function generateQuery() {
+    if (!__query) {
+        return '';
+    }
+
     return produceSql(0, __query) + ';';
 }
 
