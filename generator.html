@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Query generator</title>
+    <script src="tables.js"></script>
+</head>
+<body>
+<div>
+    <div id="tables"></div>
+    <button type="reset" onclick="createInitialTables();">Reset</button>
+</div>
+
+<pre id="result"></pre>
+
+<script>
+let __query = {};
+
+function createInitialTables() {
+    document.getElementById('result').innerText = '';
+    const tablesContainer = document.getElementById('tables');
+    tablesContainer.innerHTML = '';
+    __query = {};
+
+    for (let table in __tables) {
+        const btn = document.createElement('button');
+        btn.innerText = table;
+
+        btn.addEventListener('click', () => {
+            if (btn.nextElementSibling.tagName === 'UL') {
+                btn.nextElementSibling.remove();
+            } else {
+                addColumns(table, btn);
+            }
+        });
+
+        tablesContainer.appendChild(btn);
+        tablesContainer.appendChild(document.createElement('br'));
+    }
+}
+
+function addColumns(table, btnElem) {
+    for (const elem of document.querySelectorAll('ul.columns')) {
+        elem.remove();
+    }
+
+    const ul = document.createElement('ul');
+    ul.classList.add('columns');
+    for (const col in __tables[table].columns) {
+        const li = document.createElement('li');
+        li.innerText = col;
+        li.addEventListener('click', () => {
+            __query = { table: table };
+            showDependentTables(table, col);
+        })
+        ul.appendChild(li);
+    }
+
+    btnElem.after(ul);
+}
+
+function showDependentTables(table) {
+    const references = [];
+    for (const ref in __tables[table].references) {
+        const target = __tables[table].references[ref];
+        references.push({
+            sourceColumn: ref,
+            targetTable: target.table,
+            targetColumn: target.column
+        });
+    }
+
+    for (const tbl in __tables) {
+        if (tbl !== table) {
+            for (const ref in __tables[tbl].references) {
+                const target = __tables[tbl].references[ref];
+                if (target.table === table) {
+                    references.push({
+                        sourceColumn: target.column,
+                        targetTable: tbl,
+                        targetColumn: ref
+                    });
+                }
+            }
+        }
+    }
+
+    const tablesContainer = document.getElementById('tables');
+    tablesContainer.innerHTML = '';
+
+    references.forEach(ref => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${ref.targetTable}</b> (${ref.targetColumn})`;
+        li.addEventListener('click', () => {
+            onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
+        });
+        tablesContainer.appendChild(li);
+    });
+}
+
+function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
+    __query.select = sourceColumn;
+
+    __query = {
+        table: targetTable,
+        whereIn: targetColumn,
+        sub: __query
+    };
+
+    showDependentTables(targetTable);
+    document.getElementById('result').innerText = generateQuery();
+}
+
+function generateQuery() {
+    return produceSql(0, __query);
+}
+
+function produceSql(level, query) {
+    const indent = '  '.repeat(level);
+    let result = '';
+    if (query.select) {
+        result += indent + 'SELECT ' + query.select;
+    } else {
+        result += indent + 'SELECT *';
+    }
+
+    result += '\n' + indent + 'FROM ' + query.table;
+    if (query.whereIn) {
+        result += '\n' + indent + 'WHERE ' + query.whereIn + ' IN (';
+        result += '\n' + produceSql(level+1, query.sub);
+        result += '\n' + indent + ')';
+    }
+    return result;
+}
+
+
+createInitialTables();
+</script>
+</body>
+</html>

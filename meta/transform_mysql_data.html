@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Set up MySQL data</title>
+</head>
+<body>
+Paste the JSON export of metadata queries from phpMyAdmin. Expect is the array of <code>data</code>.
+
+<h2>Columns JSON</h2>
+<!-- Example
+[
+{"TABLE_NAME":"nq_draw","COLUMN_NAME":"id","DATA_TYPE":"int","IS_NULLABLE":"NO","COLUMN_DEFAULT":null,"COLUMN_KEY":"PRI"},
+{"TABLE_NAME":"nq_draw","COLUMN_NAME":"question_id","DATA_TYPE":"int","IS_NULLABLE":"NO","COLUMN_DEFAULT":null,"COLUMN_KEY":""},
+{"TABLE_NAME":"nq_draw","COLUMN_NAME":"owner_id","DATA_TYPE":"int","IS_NULLABLE":"NO","COLUMN_DEFAULT":null,"COLUMN_KEY":"MUL"}
+]
+-->
+<textarea id="columns" rows="10" cols="70">
+
+</textarea>
+
+<h2>Foreign key constraints</h2>
+<!-- Example
+[
+{"CONSTRAINT_NAME":"nq_draw_ibfk_1","TABLE_NAME":"nq_draw","COLUMN_NAME":"owner_id","REFERENCED_TABLE_NAME":"nq_owner","REFERENCED_COLUMN_NAME":"id"},
+{"CONSTRAINT_NAME":"nq_draw_answer_ibfk_1","TABLE_NAME":"nq_draw_answer","COLUMN_NAME":"draw_id","REFERENCED_TABLE_NAME":"nq_draw","REFERENCED_COLUMN_NAME":"id"},
+{"CONSTRAINT_NAME":"nq_draw_stats_ibfk_1","TABLE_NAME":"nq_draw_stats","COLUMN_NAME":"draw_id","REFERENCED_TABLE_NAME":"nq_draw","REFERENCED_COLUMN_NAME":"id"}
+]
+-->
+<textarea id="foreign_keys" rows="10" cols="70">
+
+</textarea>
+
+<br />
+<input type="submit" value="Generate" onclick="generate()" />
+<h2>Result</h2>
+<div id="result"></div>
+
+
+<script>
+function generate() {
+    const result = document.getElementById('result');
+    try {
+        const table = generateTableData();
+        populateReferences(table);
+        result.innerText = JSON.stringify(table);
+    } catch (e) {
+        console.error(e);
+        result.innerText = 'Error: ' + e.message;
+    }
+}
+
+function generateTableData() {
+    const columns = JSON.parse( document.getElementById('columns').value );
+    if (!Array.isArray(columns)) {
+        throw new Error('Columns JSON is not an array');
+    }
+
+    const tableData = {};
+    columns.forEach(col => {
+        const tableName = col['TABLE_NAME'];
+        if (!tableData[tableName]) {
+            tableData[tableName] = { columns: {}, references: {} };
+        }
+        const tableEntry = tableData[tableName];
+
+        const columnName = col['COLUMN_NAME'];
+        tableEntry.columns[columnName] = 1;
+    });
+    return tableData;
+}
+
+function populateReferences(tableData) {
+    const constraints = JSON.parse( document.getElementById('foreign_keys').value );
+    if (!Array.isArray(constraints)) {
+        throw new Error('Foreign key constraints JSON is not an array');
+    }
+
+    constraints.forEach(fk => {
+        const tableEntry = tableData[fk['TABLE_NAME']];
+        if (!tableEntry) {
+            throw new Error('Foreign key for table ' + fk['TABLE_NAME'] + ' provided, but no such table is known');
+        } else if (!tableEntry.columns[ fk['COLUMN_NAME'] ]) { // Sanity check
+            throw new Error('Foreign key ' + fk['TABLE_NAME'] + '.' + fk['COLUMN_NAME']
+                + ' provided for a column that is unknown');
+        }
+
+        tableEntry.references[ fk['COLUMN_NAME'] ] = {
+            table: fk['REFERENCED_TABLE_NAME'],
+            column: fk['REFERENCED_COLUMN_NAME']
+        };
+    });
+}
+
+</script>
+</body>
+</html>

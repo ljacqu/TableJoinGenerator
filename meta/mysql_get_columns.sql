@@ -1,0 +1,16 @@
+-- phpMyAdmin: Run in schema INFORMATION_SCHEMA, click on 'Export' tab, export to JSON
+
+SELECT
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT,
+    COLUMN_KEY
+FROM
+    INFORMATION_SCHEMA.COLUMNS
+WHERE
+        TABLE_SCHEMA = 'nightbot_quiz' -- CHANGE ME
+ORDER BY
+    TABLE_NAME,
+    ORDINAL_POSITION;
