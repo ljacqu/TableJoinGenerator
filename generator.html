@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>Query generator</title>
     <script src="tables.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            font-size: 10pt;
+        }
+        .prev {
+            color: #ccc;
+        }
+    </style>
 </head>
 <body>
 <div>
@@ -52,6 +61,7 @@ function addColumns(table, btnElem) {
         li.addEventListener('click', () => {
             __query = { table: table };
             showDependentTables(table, col);
+            document.getElementById('result').innerText = generateQuery();
         })
         ul.appendChild(li);
     }
@@ -59,38 +69,45 @@ function addColumns(table, btnElem) {
     btnElem.after(ul);
 }
 
-function showDependentTables(table) {
+function showDependentTables(curTable) {
     const references = [];
-    for (const ref in __tables[table].references) {
-        const target = __tables[table].references[ref];
-        references.push({
-            sourceColumn: ref,
-            targetTable: target.table,
-            targetColumn: target.column
-        });
-    }
+    const prevCol = __query.sub
+        ? {column: __query.sub.select, table: __query.sub.table}
+        : null;
 
-    for (const tbl in __tables) {
-        if (tbl !== table) {
-            for (const ref in __tables[tbl].references) {
-                const target = __tables[tbl].references[ref];
-                if (target.table === table) {
+    // Add references from the current table
+    Object.entries(__tables[curTable].references).forEach(([sourceColumn, reference]) => {
+        references.push({
+            sourceColumn: sourceColumn,
+            targetTable: reference.table,
+            targetColumn: reference.column,
+            isPrevious: (prevCol && prevCol.table === reference.table && prevCol.column === reference.column)
+        });
+    });
+
+    // Check other tables for references targeting the current table
+    Object.entries(__tables).forEach(([table, definition]) => {
+        if (table !== curTable) {
+            Object.entries(definition.references).forEach(([targetColumn, reference]) => {
+                if (reference.table === curTable) {
                     references.push({
-                        sourceColumn: target.column,
-                        targetTable: tbl,
-                        targetColumn: ref
+                        sourceColumn: reference.column,
+                        targetTable: table,
+                        targetColumn: targetColumn,
+                        isPrevious: (prevCol && prevCol.table === table && prevCol.column === targetColumn)
                     });
                 }
-            }
+            });
         }
-    }
+    });
 
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '';
 
     references.forEach(ref => {
         const li = document.createElement('li');
-        li.innerHTML = `<b>${ref.targetTable}</b> (${ref.targetColumn})`;
+        const cssClass = ref.isPrevious ? 'prev' : '';
+        li.innerHTML = `<b class="${cssClass}">${ref.targetTable}</b> (${ref.targetColumn})`;
         li.addEventListener('click', () => {
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
@@ -132,7 +149,6 @@ function produceSql(level, query) {
     }
     return result;
 }
-
 
 createInitialTables();
 </script>
