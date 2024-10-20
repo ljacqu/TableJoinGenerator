@@ -39,7 +39,7 @@ function createInitialTables() {
             if (btn.nextElementSibling.tagName === 'UL') {
                 btn.nextElementSibling.remove();
             } else {
-                addColumns(table, btn);
+                showInitialColumns(table, btn);
             }
         });
         btn.addEventListener('contextmenu', (e) => {
@@ -54,7 +54,7 @@ function createInitialTables() {
     }
 }
 
-function addColumns(table, btnElem) {
+function showInitialColumns(table, btnElem) {
     for (const elem of document.querySelectorAll('ul.columns')) {
         elem.remove();
     }
@@ -65,14 +65,38 @@ function addColumns(table, btnElem) {
         const li = document.createElement('li');
         li.innerText = col;
         li.addEventListener('click', () => {
-            __query = { table: table };
-            showDependentTables(table);
-            document.getElementById('result').innerText = generateQuery();
+            createColumnFilterElem(table, col, li);
         });
         ul.appendChild(li);
     }
 
     btnElem.after(ul);
+}
+
+function createColumnFilterElem(table, column, colElem) {
+    for (const elem of document.querySelectorAll('input.where_input')) {
+        elem.remove();
+    }
+
+    const inputElem = document.createElement('input');
+    inputElem.type = 'text';
+    inputElem.classList.add('where_input');
+
+    inputElem.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            __query = {
+                table: table,
+                where: {
+                    column: column,
+                    filter: inputElem.value
+                }
+            };
+            showDependentTables(table);
+            document.getElementById('result').innerText = generateQuery();
+        }
+    });
+
+    colElem.after(inputElem);
 }
 
 function showDependentTables(curTable) {
@@ -135,11 +159,11 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
 }
 
 function generateQuery() {
-    return produceSql(0, __query);
+    return produceSql(0, __query) + ';';
 }
 
 function produceSql(level, query) {
-    const indent = '  '.repeat(level);
+    const indent = '    '.repeat(level);
     let result = '';
     if (query.select) {
         result += indent + 'SELECT ' + query.select;
@@ -152,6 +176,13 @@ function produceSql(level, query) {
         result += '\n' + indent + 'WHERE ' + query.whereIn + ' IN (';
         result += '\n' + produceSql(level+1, query.sub);
         result += '\n' + indent + ')';
+    } else if (query.where) {
+        result += '\n' + indent + 'WHERE ' + query.where.column;
+        if (!query.where.filter) {
+            result += ' IS NULL';
+        } else {
+            result += ' = \'' + query.where.filter.replaceAll('\'', '\'\'') + '\'';
+        }
     }
     return result;
 }
