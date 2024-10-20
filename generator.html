@@ -31,7 +31,7 @@ function createInitialTables() {
     tablesContainer.innerHTML = '';
     __query = {};
 
-    for (let table in __tables) {
+    for (const table in __tables) {
         const btn = document.createElement('button');
         btn.innerText = table;
 
@@ -42,6 +42,12 @@ function createInitialTables() {
                 addColumns(table, btn);
             }
         });
+        btn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            __query = { table: table };
+            showDependentTables(table);
+            document.getElementById('result').innerText = generateQuery();
+        })
 
         tablesContainer.appendChild(btn);
         tablesContainer.appendChild(document.createElement('br'));
@@ -60,9 +66,9 @@ function addColumns(table, btnElem) {
         li.innerText = col;
         li.addEventListener('click', () => {
             __query = { table: table };
-            showDependentTables(table, col);
+            showDependentTables(table);
             document.getElementById('result').innerText = generateQuery();
-        })
+        });
         ul.appendChild(li);
     }
 
