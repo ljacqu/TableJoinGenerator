@@ -11,6 +11,10 @@ const __tables = {
       "owner_id": {
         "table": "nq_owner",
         "column": "id"
+      },
+      "question_id": {
+        "table": "nq_question",
+        "column": "id"
       }
     }
   },

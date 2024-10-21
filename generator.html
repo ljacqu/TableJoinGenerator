@@ -9,9 +9,18 @@
             font-family: Arial;
             font-size: 10pt;
         }
-        .prev {
+
+        /* rc = related column */
+        .rc-prev {
             color: #ccc;
         }
+        .rc-past {
+            color: #666;
+        }
+        .rc-new {
+            font-weight: bold;
+        }
+
         td {
             padding: 1em;
             vertical-align: top;
@@ -48,12 +57,14 @@
 
 <script>
 let __query = null;
+let __pastColumns = new Set();
 
 function createInitialTables() {
     document.getElementById('result').innerText = '';
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '';
     __query = null;
+    __pastColumns = new Set();
 
     for (const table in __tables) {
         const btn = document.createElement('button');
@@ -69,7 +80,11 @@ function createInitialTables() {
         btn.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             __query = { table: table };
-            showDependentTables(table);
+            __pastColumns.add({
+                column: null,
+                table: table
+            });
+            showRelatedTables(table);
             document.getElementById('result').innerText = generateQuery();
         })
 
@@ -115,7 +130,11 @@ function createColumnFilterElem(table, column, colElem) {
                     filter: inputElem.value
                 }
             };
-            showDependentTables(table);
+            __pastColumns.add({
+                column: column,
+                table: table
+            });
+            showRelatedTables(table);
             document.getElementById('result').innerText = generateQuery();
         }
     });
@@ -123,7 +142,22 @@ function createColumnFilterElem(table, column, colElem) {
     colElem.after(inputElem);
 }
 
-function showDependentTables(curTable) {
+// Defines the CSS class name(s) when a related column is shown. You can override this function to show all
+// columns the same or to have custom behavior, e.g. to check for past (table, column) combinations and not just
+// past tables as is currently implemented.
+function getClassForRelatedColumn(table, column, prevCol) {
+    if (prevCol && prevCol.table === table && prevCol.column === column) {
+        return 'rc-prev';
+    }
+    for (const pastColumn of __pastColumns) {
+        if (pastColumn.table === table) {
+            return 'rc-past';
+        }
+    }
+    return 'rc-new';
+}
+
+function showRelatedTables(curTable) {
     const references = [];
     const prevCol = __query.sub
         ? {column: __query.sub.select, table: __query.sub.table}
@@ -134,8 +168,7 @@ function showDependentTables(curTable) {
         references.push({
             sourceColumn: sourceColumn,
             targetTable: reference.table,
-            targetColumn: reference.column,
-            isPrevious: (prevCol && prevCol.table === reference.table && prevCol.column === reference.column)
+            targetColumn: reference.column
         });
     });
 
@@ -147,8 +180,7 @@ function showDependentTables(curTable) {
                     references.push({
                         sourceColumn: reference.column,
                         targetTable: table,
-                        targetColumn: targetColumn,
-                        isPrevious: (prevCol && prevCol.table === table && prevCol.column === targetColumn)
+                        targetColumn: targetColumn
                     });
                 }
             });
@@ -160,8 +192,8 @@ function showDependentTables(curTable) {
 
     references.forEach(ref => {
         const li = document.createElement('li');
-        const cssClass = ref.isPrevious ? 'prev' : '';
-        li.innerHTML = `<b class="${cssClass}">${ref.targetTable}</b> (${ref.targetColumn})`;
+        const cssClass = getClassForRelatedColumn(ref.targetTable, ref.targetColumn, prevCol);
+        li.innerHTML = `<span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
         li.addEventListener('click', () => {
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
@@ -178,7 +210,7 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
         sub: __query
     };
 
-    showDependentTables(targetTable);
+    showRelatedTables(targetTable);
     document.getElementById('result').innerText = generateQuery();
 }
 
