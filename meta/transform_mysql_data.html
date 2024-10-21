@@ -43,7 +43,7 @@ function generate() {
     try {
         const table = generateTableData();
         populateReferences(table);
-        result.innerText = JSON.stringify(table);
+        result.innerText = 'const __tables = ' + JSON.stringify(table) + ';';
     } catch (e) {
         console.error(e);
         result.innerText = 'Error: ' + e.message;
@@ -60,12 +60,12 @@ function generateTableData() {
     columns.forEach(col => {
         const tableName = col['TABLE_NAME'];
         if (!tableData[tableName]) {
-            tableData[tableName] = { columns: {}, references: {} };
+            tableData[tableName] = { columns: {}, references: {}, highlights: {} };
         }
         const tableEntry = tableData[tableName];
 
         const columnName = col['COLUMN_NAME'];
-        tableEntry.columns[columnName] = 1;
+        tableEntry.columns[columnName] = col['DATA_TYPE'];
     });
     return tableData;
 }

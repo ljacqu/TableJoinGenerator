@@ -222,6 +222,19 @@ function generateQuery() {
     return produceSql(0, __query) + ';';
 }
 
+function formatValueForWhereClause(value, table, column) {
+    const columnType = __tables[table].columns[column];
+    switch (columnType) {
+        case 'int':
+        case 'tinyint':
+        case 'decimal':
+            return value;
+        case 'varchar':
+        default: // quote by default
+            return `'` + value.replaceAll('\'', '\'\'') + `'`;
+    }
+}
+
 function produceSql(level, query) {
     const indent = '    '.repeat(level);
     let result = '';
@@ -241,7 +254,7 @@ function produceSql(level, query) {
         if (!query.where.filter) {
             result += ' IS NULL';
         } else {
-            result += ' = \'' + query.where.filter.replaceAll('\'', '\'\'') + '\'';
+            result += ' = ' + formatValueForWhereClause(query.where.filter, query.table, query.where.column);
         }
     }
     return result;
