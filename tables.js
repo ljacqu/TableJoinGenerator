@@ -1,5 +1,6 @@
 const __tables = {
     "nq_draw": {
+        "alias": "dr",
         "columns": {
             "id": "int",
             "question_id": "int",
@@ -20,6 +21,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_draw_answer": {
+        "alias": "ans",
         "columns": {
             "id": "int",
             "draw_id": "int",
@@ -37,6 +39,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_draw_stats": {
+        "alias": "stat",
         "columns": {
             "id": "int",
             "draw_id": "int",
@@ -54,6 +57,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_owner": {
+        "alias": "own",
         "columns": {
             "id": "int",
             "name": "varchar",
@@ -76,6 +80,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_owner_nightbot": {
+        "alias": "nbot",
         "columns": {
             "id": "int",
             "owner_id": "int",
@@ -97,6 +102,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_owner_stats": {
+        "alias": "ownstat",
         "columns": {
             "id": "int",
             "data_url": "varchar",
@@ -106,6 +112,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_question": {
+        "alias": "q",
         "columns": {
             "id": "int",
             "owner_id": "int",
@@ -124,6 +131,7 @@ const __tables = {
         "highlights": {}
     },
     "nq_settings": {
+        "alias": "stg",
         "columns": {
             "id": "int",
             "active_mode": "varchar",

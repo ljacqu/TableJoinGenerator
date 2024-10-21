@@ -56,6 +56,13 @@
 </table>
 
 <script>
+// Configuration
+const __schema = 'nightbot_quiz';
+const __aliasFn = function (tableName) {
+    return __tables[tableName].alias;
+};
+
+// State
 let __query = null;
 let __pastColumns = new Set();
 
@@ -311,6 +318,26 @@ function formatValueForWhereClause(value, table, column) {
     }
 }
 
+function formatTable(tableName, includeAlias) {
+    const tableReference = __schema ? `${__schema}.${tableName}` : tableName;
+    if (includeAlias) {
+        const alias = __aliasFn(tableName);
+        if (alias) {
+            return tableReference + ' ' + alias;
+        }
+    }
+    return tableReference;
+}
+
+function formatColumn(tableName, columnName, useColNameWithTable) {
+    if (!useColNameWithTable) {
+        return columnName;
+    }
+
+    const tableReference = __aliasFn(tableName) ?? formatTable(tableName);
+    return tableReference + '.' + columnName;
+}
+
 function produceSql(level, query) {
     const indent = '    '.repeat(level);
     let result = '';
@@ -320,20 +347,22 @@ function produceSql(level, query) {
         result += indent + 'SELECT *';
     }
 
-    result += '\n' + indent + 'FROM ' + query.table;
+    result += '\n' + indent + 'FROM ' + formatTable(query.table, !!query.leftJoin);
+
     if (query.leftJoin) {
         query.leftJoin.forEach(lj => {
-            result += '\n' + indent + 'LEFT JOIN ' + lj.targetTable
-              + '\n' + indent + '  ON ' + lj.targetTable + '.' + lj.sourceColumn + ' = ' + lj.targetTable + '.' + lj.targetColumn;
+            result += '\n' + indent + 'LEFT JOIN ' + formatTable(lj.targetTable, true)
+                + '\n' + indent + ' ON ' + formatColumn(lj.targetTable, lj.targetColumn, true)
+                + ' = ' + formatColumn(lj.sourceTable, lj.sourceColumn, true);
         });
     }
 
     if (query.whereIn) {
-        result += '\n' + indent + 'WHERE ' + query.whereIn + ' IN (';
+        result += '\n' + indent + 'WHERE ' + formatColumn(query.table, query.whereIn, !!query.leftJoin) + ' IN (';
         result += '\n' + produceSql(level+1, query.sub);
         result += '\n' + indent + ')';
     } else if (query.where) {
-        result += '\n' + indent + 'WHERE ' + query.where.column;
+        result += '\n' + indent + 'WHERE ' + formatColumn(query.table, query.where.column, !!query.leftJoin);
         if (!query.where.filter) {
             result += ' IS NULL';
         } else {
