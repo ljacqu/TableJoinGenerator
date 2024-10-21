@@ -84,7 +84,7 @@ function createInitialTables() {
                 column: null,
                 table: table
             });
-            showRelatedTables(table);
+            showRelatedColumns(table);
             document.getElementById('result').innerText = generateQuery();
         })
 
@@ -134,7 +134,7 @@ function createColumnFilterElem(table, column, colElem) {
                 column: column,
                 table: table
             });
-            showRelatedTables(table);
+            showRelatedColumns(table);
             document.getElementById('result').innerText = generateQuery();
         }
     });
@@ -157,15 +157,13 @@ function getClassForRelatedColumn(table, column, prevCol) {
     return 'rc-new';
 }
 
-function showRelatedTables(curTable) {
+function collectRelatedColumns(curTable) {
     const references = [];
-    const prevCol = __query.sub
-        ? {column: __query.sub.select, table: __query.sub.table}
-        : null;
 
     // Add references from the current table
     Object.entries(__tables[curTable].references).forEach(([sourceColumn, reference]) => {
         references.push({
+            sourceTable: curTable,
             sourceColumn: sourceColumn,
             targetTable: reference.table,
             targetColumn: reference.column
@@ -178,6 +176,7 @@ function showRelatedTables(curTable) {
             Object.entries(definition.references).forEach(([targetColumn, reference]) => {
                 if (reference.table === curTable) {
                     references.push({
+                        sourceTable: curTable,
                         sourceColumn: reference.column,
                         targetTable: table,
                         targetColumn: targetColumn
@@ -187,18 +186,95 @@ function showRelatedTables(curTable) {
         }
     });
 
+    return references;
+}
+
+function showRelatedColumns(curTable) {
+    const references = collectRelatedColumns(curTable);
+
+    const prevCol = __query.sub
+        ? {column: __query.sub.select, table: __query.sub.table}
+        : null;
+
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '';
+    const ul = document.createElement('ul');
+    tablesContainer.append(ul);
 
     references.forEach(ref => {
         const li = document.createElement('li');
+
+        const btnLeftJoin = document.createElement('button');
+        btnLeftJoin.innerText = '⋙';
+        btnLeftJoin.title = 'Left join';
+        btnLeftJoin.addEventListener('click', () => {
+            onClickLeftJoinColumn(curTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+        });
+        li.append(btnLeftJoin);
+
+        const spanWithTableColumn = document.createElement('span');
         const cssClass = getClassForRelatedColumn(ref.targetTable, ref.targetColumn, prevCol);
-        li.innerHTML = `<span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
-        li.addEventListener('click', () => {
+        spanWithTableColumn.innerHTML = ` <span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
+        li.append(spanWithTableColumn);
+
+        spanWithTableColumn.addEventListener('click', () => {
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
-        tablesContainer.appendChild(li);
+        ul.appendChild(li);
     });
+}
+
+function showLeftJoinColumns() {
+    const tables = new Set();
+    tables.add(__query.table);
+    for (const leftJoin of __query.leftJoin) {
+        tables.add(leftJoin.sourceTable);
+        tables.add(leftJoin.targetTable);
+    }
+
+    const references = [];
+    tables.forEach(activeTable => {
+        references.push(...collectRelatedColumns(activeTable));
+    });
+    Object.entries(references).forEach(([refKey, reference]) => {
+        if (tables.has(reference.sourceTable) && tables.has(reference.targetTable)) {
+            delete references[refKey];
+        }
+    });
+
+    const tablesContainer = document.getElementById('tables');
+    tablesContainer.innerHTML = '';
+    const ul = document.createElement('ul');
+    tablesContainer.append(ul);
+    references.forEach(ref => {
+        const li = document.createElement('li');
+
+        const spanWithTableColumn = document.createElement('span');
+        const cssClass = getClassForRelatedColumn(ref.targetTable, ref.targetColumn, false);
+        spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} `;
+        li.append(spanWithTableColumn);
+
+        spanWithTableColumn.addEventListener('click', () => {
+            onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+        });
+        ul.appendChild(li);
+    });
+}
+
+function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetColumn) {
+    if (!__query.leftJoin) {
+        __query.leftJoin = [];
+    }
+
+    __query.leftJoin.push({
+        sourceTable: sourceTable,
+        sourceColumn: sourceColumn,
+        targetTable: targetTable,
+        targetColumn: targetColumn
+    });
+
+    showLeftJoinColumns();
+    document.getElementById('result').innerText = generateQuery();
 }
 
 function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
@@ -210,7 +286,7 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
         sub: __query
     };
 
-    showRelatedTables(targetTable);
+    showRelatedColumns(targetTable);
     document.getElementById('result').innerText = generateQuery();
 }
 
@@ -245,6 +321,13 @@ function produceSql(level, query) {
     }
 
     result += '\n' + indent + 'FROM ' + query.table;
+    if (query.leftJoin) {
+        query.leftJoin.forEach(lj => {
+            result += '\n' + indent + 'LEFT JOIN ' + lj.targetTable
+              + '\n' + indent + '  ON ' + lj.targetTable + '.' + lj.sourceColumn + ' = ' + lj.targetTable + '.' + lj.targetColumn;
+        });
+    }
+
     if (query.whereIn) {
         result += '\n' + indent + 'WHERE ' + query.whereIn + ' IN (';
         result += '\n' + produceSql(level+1, query.sub);
