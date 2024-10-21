@@ -242,13 +242,18 @@ function showRelatedColumns(curTable) {
     });
 }
 
-function showLeftJoinColumns() {
+function collectUsedTablesInLeftJoinMode() {
     const tables = new Set();
     tables.add(__query.table);
     for (const leftJoin of __query.leftJoin) {
         tables.add(leftJoin.sourceTable);
         tables.add(leftJoin.targetTable);
     }
+    return tables;
+}
+
+function showLeftJoinColumns() {
+    const tables = collectUsedTablesInLeftJoinMode();
 
     const references = [];
     tables.forEach(activeTable => {
@@ -277,6 +282,59 @@ function showLeftJoinColumns() {
         });
         ul.appendChild(li);
     });
+
+    const columnsButton = document.createElement('button');
+    columnsButton.innerText = 'Columns';
+    columnsButton.addEventListener('click', () => {
+        showPossibleSelectColumns(columnsButton);
+    });
+    ul.after(columnsButton);
+}
+
+// When in 'left join' mode, offer to select only some columns
+function showPossibleSelectColumns(columnsBtn) {
+    __query.select = [];
+
+    const tables = collectUsedTablesInLeftJoinMode();
+    const columns = [];
+    tables.forEach(table => {
+        for (const col in __tables[table].columns) {
+            columns.push({
+                table: table,
+                column: col
+            });
+        }
+    });
+
+    const title = document.createElement('h3');
+    title.innerText = 'Select columns';
+
+    const ul = document.createElement('ul');
+
+    columns.forEach(col => {
+        const li = document.createElement('li');
+        li.innerText = col.table + '.' + col.column;
+        li.addEventListener('click', () => {
+            if (li.style.fontWeight !== 'bold') {
+                __query.select.push({
+                    table: col.table,
+                    column: col.column
+                });
+                li.style.fontWeight = 'bold';
+            } else {
+                __query.select = __query.select
+                    .filter(sel => sel.table !== col.table || sel.column !== col.column);
+                li.style.fontWeight = 'normal';
+            }
+            document.getElementById('result').innerText = generateQuery();
+        });
+        ul.append(li);
+    });
+
+    columnsBtn.after(title);
+    title.after(ul);
+    columnsBtn.remove();
+    document.getElementById('result').innerText = generateQuery();
 }
 
 function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetColumn) {
@@ -296,7 +354,12 @@ function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetCol
 }
 
 function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
-    __query.select = sourceColumn;
+    __query.select = [
+        {
+            table: __query.table, // table is redundant here, but is needed in leftJoin mode
+            column: sourceColumn
+        }
+    ];
 
     __query = {
         table: targetTable,
@@ -352,8 +415,10 @@ function formatColumn(tableName, columnName, useColNameWithTable) {
 function produceSql(level, query) {
     const indent = '    '.repeat(level);
     let result = '';
-    if (query.select) {
-        result += indent + 'SELECT ' + query.select;
+    if (query.select?.length > 0) {
+        result += indent + 'SELECT ' + query.select
+            .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
+            .join('\n     , ');
     } else {
         result += indent + 'SELECT *';
     }
