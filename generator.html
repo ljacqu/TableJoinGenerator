@@ -120,7 +120,7 @@ function showInitialColumns(table, btnElem) {
 }
 
 function createColumnFilterElem(table, column, colElem) {
-    for (const elem of document.querySelectorAll('input.where_input')) {
+    for (const elem of document.querySelectorAll('.where_input')) {
         elem.remove();
     }
 
@@ -128,25 +128,36 @@ function createColumnFilterElem(table, column, colElem) {
     inputElem.type = 'text';
     inputElem.classList.add('where_input');
 
+    const onSubmitFilter = () => {
+        __query = {
+            table: table,
+            where: {
+                column: column,
+                filter: inputElem.value
+            }
+        };
+        __pastColumns.add({
+            column: column,
+            table: table
+        });
+        showRelatedColumns(table);
+        document.getElementById('result').innerText = generateQuery();
+    };
+
     inputElem.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-            __query = {
-                table: table,
-                where: {
-                    column: column,
-                    filter: inputElem.value
-                }
-            };
-            __pastColumns.add({
-                column: column,
-                table: table
-            });
-            showRelatedColumns(table);
-            document.getElementById('result').innerText = generateQuery();
+            onSubmitFilter();
         }
     });
-
     colElem.after(inputElem);
+
+    const okBtn = document.createElement('button');
+    okBtn.classList.add('where_input');
+    okBtn.innerText = 'Go';
+    okBtn.addEventListener('click', () => {
+        onSubmitFilter();
+    });
+    inputElem.after(okBtn);
 }
 
 // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
@@ -352,7 +363,7 @@ function produceSql(level, query) {
     if (query.leftJoin) {
         query.leftJoin.forEach(lj => {
             result += '\n' + indent + 'LEFT JOIN ' + formatTable(lj.targetTable, true)
-                + '\n' + indent + ' ON ' + formatColumn(lj.targetTable, lj.targetColumn, true)
+                + '\n' + indent + '  ON ' + formatColumn(lj.targetTable, lj.targetColumn, true)
                 + ' = ' + formatColumn(lj.sourceTable, lj.sourceColumn, true);
         });
     }
