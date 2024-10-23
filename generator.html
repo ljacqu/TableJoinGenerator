@@ -289,6 +289,10 @@ function showRelatedColumns(curTable) {
         spanWithTableColumn.addEventListener('click', () => {
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
+        spanWithTableColumn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
+        });
         ul.appendChild(li);
     });
 }
@@ -330,6 +334,10 @@ function showLeftJoinColumns() {
         li.append(spanWithTableColumn);
 
         spanWithTableColumn.addEventListener('click', () => {
+            onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+        });
+        spanWithTableColumn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
             onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
         ul.appendChild(li);
