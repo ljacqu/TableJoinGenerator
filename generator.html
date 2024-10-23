@@ -311,7 +311,9 @@ function showLeftJoinColumns() {
 
 // When in 'left join' mode, offer to select only some columns
 function showPossibleSelectColumns(columnsBtn) {
-    __query.select = [];
+    if (!__query.select) {
+        __query.select = [];
+    }
 
     const tables = collectUsedTablesInLeftJoinMode();
     const columns = [];
@@ -319,7 +321,8 @@ function showPossibleSelectColumns(columnsBtn) {
         for (const col in __tables[table].columns) {
             columns.push({
                 table: table,
-                column: col
+                column: col,
+                active: __query.select.some(select => table === select.table && col === select.column)
             });
         }
     });
@@ -332,17 +335,20 @@ function showPossibleSelectColumns(columnsBtn) {
     columns.forEach(col => {
         const li = document.createElement('li');
         li.innerText = col.table + '.' + col.column;
+        li.dataset.table = col.table;
+        li.dataset.column = col.column;
+        li.style.fontWeight = col.active ? 'bold' : 'normal';
         li.addEventListener('click', () => {
-            if (li.style.fontWeight !== 'bold') {
-                __query.select.push({
-                    table: col.table,
-                    column: col.column
-                });
-                li.style.fontWeight = 'bold';
-            } else {
-                __query.select = __query.select
-                    .filter(sel => sel.table !== col.table || sel.column !== col.column);
-                li.style.fontWeight = 'normal';
+            li.style.fontWeight = li.style.fontWeight !== 'bold' ? 'bold' : 'normal';
+
+            __query.select = [];
+            for (const column of ul.children) {
+                if (column.style.fontWeight === 'bold') {
+                    __query.select.push({
+                        table: column.dataset.table,
+                        column: column.dataset.column
+                    });
+                }
             }
             updateQueryOnPage();
         });
