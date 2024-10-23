@@ -154,6 +154,13 @@ function createColumnFilterElem(table, column, colElem) {
     inputElem.classList.add('where_input');
 
     const onSubmitFilter = () => {
+        try {
+            validateColumnFilterElem(table, column, inputElem.value);
+        } catch (e) {
+            window.alert(e.message);
+            return;
+        }
+
         __query = {
             table: table,
             where: {
@@ -183,6 +190,24 @@ function createColumnFilterElem(table, column, colElem) {
         onSubmitFilter();
     });
     inputElem.after(okBtn);
+}
+
+function validateColumnFilterElem(table, column, value) {
+    const columnType = __tables[table].columns[column];
+
+    switch (columnType) {
+        case 'int':
+        case 'tinyint':
+        case 'decimal':
+            if (value && value !== '!' && Number.isNaN(Number(value))) {
+                throw new Error('Invalid number');
+            }
+            break;
+        case 'varchar':
+            break;
+        default:
+            console.log(`Unhandled validation for ${columnType}`);
+    }
 }
 
 // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
@@ -487,6 +512,8 @@ function produceSql(level, query) {
         result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.where.column, !!query.leftJoin);
         if (!query.where.filter) {
             result += ' <span class="sql-keyword">IS NULL</span>';
+        } else if (query.where.filter === '!') {
+            result += ' <span class="sql-keyword">IS NOT NULL</span>';
         } else {
             result += ' = ' + formatValueForWhereClause(query.where.filter, query.table, query.where.column);
         }
