@@ -79,6 +79,21 @@
         .btn-active {
             background-color: #ff4;
         }
+        .btn-table {
+            background-color: transparent;
+            color: #222;
+            font-weight: bold;
+            padding: 2px;
+            border: 0;
+            font-size: 10.5pt;
+        }
+        .btn-table:hover {
+            background-color: #ff7;
+        }
+        ul.table-list {
+            list-style: none;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -117,6 +132,7 @@ function createInitialTables() {
     for (const table in __tables) {
         const btn = document.createElement('button');
         btn.innerText = table;
+        btn.classList.add('btn-table');
 
         btn.addEventListener('click', () => {
             if (btn.nextElementSibling.tagName === 'UL') {
@@ -283,15 +299,16 @@ function showRelatedColumns(curTable) {
         : null;
 
     const tablesContainer = document.getElementById('tables');
-    tablesContainer.innerHTML = '<h3>Join table</h3>';
+    tablesContainer.innerHTML = '<h3>Join/subqery table</h3>';
     const ul = document.createElement('ul');
+    ul.classList.add('table-list');
     tablesContainer.append(ul);
 
     references.forEach(ref => {
         const li = document.createElement('li');
 
         const btnLeftJoin = document.createElement('button');
-        btnLeftJoin.innerText = '⋙';
+        btnLeftJoin.innerText = '⟕';
         btnLeftJoin.title = 'Left join';
         btnLeftJoin.addEventListener('click', () => {
             onClickLeftJoinColumn(curTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
@@ -342,6 +359,7 @@ function showLeftJoinColumns() {
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Left join</h3>';
     const ul = document.createElement('ul');
+    ul.classList.add('table-list');
     tablesContainer.append(ul);
     references.forEach(ref => {
         const li = document.createElement('li');
