@@ -6,8 +6,8 @@
     <script src="tables.js"></script>
     <style>
         body {
-            font-family: Arial;
-            font-size: 10pt;
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
         }
 
         /* rc = related column */
@@ -42,17 +42,29 @@
             padding: 1em;
             vertical-align: top;
         }
+        #page {
+            display: flex;
+            height: 100vh; /* Full height of the viewport */
+        }
         #side {
-            min-width: 200px;
-            overflow: scroll;
+            flex-shrink: 0;
+            height: 100vh;
+            min-width: 470px;
+            overflow-y: auto;
+            padding: 8px;
         }
         #result {
-            border: 1px solid #333;
-            background-color: #eee;
-            padding: 2em;
+            flex-grow: 1;
+            padding: 20px;
             font-family: Consolas, monospace;
         }
-        #result:empty {
+        #query {
+            border: 1px solid #333;
+            background-color: #eee;
+            display: inline-block;
+            padding: 20px;
+        }
+        #query:empty {
             display: none;
         }
         #tables {
@@ -70,18 +82,17 @@
     </style>
 </head>
 <body>
-<table>
-    <tr>
-        <td id="side">
-            <div id="tables"></div>
-            <button onclick="createInitialTables();">Reset</button>
-            <button id="btn_agg" style="display: none" onclick="onClickAggregateButton(this)">Aggregate</button>
-        </td>
-        <td>
-            <pre id="result"></pre>
-        </td>
-    </tr>
-</table>
+
+<div id="page">
+    <div id="side">
+        <div id="tables"></div>
+        <button onclick="createInitialTables();">Reset</button>
+        <button id="btn_agg" style="display: none" onclick="onClickAggregateButton(this)">Aggregate</button>
+    </div>
+    <div id="result">
+        <pre id="query"></pre>
+    </div>
+</div>
 
 <script>
 // Configuration
@@ -95,12 +106,13 @@ let __query = null;
 let __pastColumns = new Set();
 
 function createInitialTables() {
-    document.getElementById('result').innerText = '';
     const tablesContainer = document.getElementById('tables');
-    tablesContainer.innerHTML = '';
+    tablesContainer.innerHTML = '<h3>Tables</h3>';
     __query = null;
     __pastColumns = new Set();
     document.getElementById('btn_agg').style.display = 'none';
+    document.getElementById('btn_agg').classList.remove('btn-active');
+    updateQueryOnPage();
 
     for (const table in __tables) {
         const btn = document.createElement('button');
@@ -271,7 +283,7 @@ function showRelatedColumns(curTable) {
         : null;
 
     const tablesContainer = document.getElementById('tables');
-    tablesContainer.innerHTML = '';
+    tablesContainer.innerHTML = '<h3>Join table</h3>';
     const ul = document.createElement('ul');
     tablesContainer.append(ul);
 
@@ -328,7 +340,7 @@ function showLeftJoinColumns() {
     });
 
     const tablesContainer = document.getElementById('tables');
-    tablesContainer.innerHTML = '';
+    tablesContainer.innerHTML = '<h3>Left join</h3>';
     const ul = document.createElement('ul');
     tablesContainer.append(ul);
     references.forEach(ref => {
@@ -448,6 +460,7 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
         sub: __query
     };
 
+    document.getElementById('btn_agg').classList.remove('btn-active');
     showRelatedColumns(targetTable);
     updateQueryOnPage();
 }
@@ -464,7 +477,7 @@ function onClickAggregateButton(btn) {
 }
 
 function updateQueryOnPage() {
-    document.getElementById('result').innerHTML = generateQuery();
+    document.getElementById('query').innerHTML = generateQuery();
 }
 
 function generateQuery() {
@@ -514,13 +527,12 @@ function produceSql(level, query) {
     const indent = '    '.repeat(level);
     let result = indent + '<span class="sql-keyword">SELECT</span> ';
     if (query.select?.length > 0) {
-        if (query.agg) {
-            result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>'
-               + '\n     , ';
-        }
         result += query.select
             .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
             .join('\n     , ');
+        if (query.agg) {
+            result += '\n     , <span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
+        }
     } else {
         if (query.agg) {
             result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
