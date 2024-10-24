@@ -64,6 +64,9 @@
         .active-column {
             font-weight: bold;
         }
+        .btn-active {
+            background-color: #ff4;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +75,7 @@
         <td id="side">
             <div id="tables"></div>
             <button onclick="createInitialTables();">Reset</button>
+            <button id="btn_agg" style="display: none" onclick="onClickAggregateButton(this)">Aggregate</button>
         </td>
         <td>
             <pre id="result"></pre>
@@ -96,6 +100,7 @@ function createInitialTables() {
     tablesContainer.innerHTML = '';
     __query = null;
     __pastColumns = new Set();
+    document.getElementById('btn_agg').style.display = 'none';
 
     for (const table in __tables) {
         const btn = document.createElement('button');
@@ -259,6 +264,7 @@ function collectRelatedColumns(curTable) {
 
 function showRelatedColumns(curTable) {
     const references = collectRelatedColumns(curTable);
+    document.getElementById('btn_agg').style.display = 'inline-block';
 
     const prevCol = __query.sub
         ? {column: __query.sub.select, table: __query.sub.table}
@@ -309,6 +315,7 @@ function collectUsedTablesInLeftJoinMode() {
 
 function showLeftJoinColumns() {
     const tables = collectUsedTablesInLeftJoinMode();
+    document.getElementById('btn_agg').style.display = 'inline-block';
 
     const references = [];
     tables.forEach(activeTable => {
@@ -433,6 +440,7 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
             column: sourceColumn
         }
     ];
+    __query.agg = false;
 
     __query = {
         table: targetTable,
@@ -441,6 +449,17 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
     };
 
     showRelatedColumns(targetTable);
+    updateQueryOnPage();
+}
+
+function onClickAggregateButton(btn) {
+    if (btn.classList.contains('btn-active')) {
+        btn.classList.remove('btn-active');
+        __query.agg = false;
+    } else {
+        btn.classList.add('btn-active');
+        __query.agg = true;
+    }
     updateQueryOnPage();
 }
 
@@ -493,13 +512,21 @@ function formatColumn(tableName, columnName, useColNameWithTable) {
 
 function produceSql(level, query) {
     const indent = '    '.repeat(level);
-    let result = '';
+    let result = indent + '<span class="sql-keyword">SELECT</span> ';
     if (query.select?.length > 0) {
-        result += indent + '<span class="sql-keyword">SELECT</span> ' + query.select
+        if (query.agg) {
+            result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>'
+               + '\n     , ';
+        }
+        result += query.select
             .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
             .join('\n     , ');
     } else {
-        result += indent + '<span class="sql-keyword">SELECT</span> <span class="sql-star">*</span>';
+        if (query.agg) {
+            result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
+        } else {
+            result += '<span class="sql-star">*</span>';
+        }
     }
 
     result += '\n' + indent + '<span class="sql-keyword">FROM</span> ' + formatTable(query.table, !!query.leftJoin);
@@ -525,6 +552,11 @@ function produceSql(level, query) {
         } else {
             result += ' = ' + formatValueForWhereClause(query.where.filter, query.table, query.where.column);
         }
+    }
+    if (query.agg && query.select?.length > 0) {
+        result += '\n' + indent + '<span class="sql-keyword">GROUP BY</span> ' + query.select
+            .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
+            .join('\n       , ');
     }
     return result;
 }
