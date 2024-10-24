@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Set up Oracle data</title>
+</head>
+<body>
+Paste a CSV export of metadata queries.
+
+<h2>Columns JSON</h2>
+<!-- Example
+(table_name, column_name, data_type)
+T_ABC,ID,BIGINT
+T_ABC,DEF_ID,BIGINT
+T_ABC,NAME,VARCHAR2
+-->
+<textarea id="columns" rows="10" cols="70">
+
+</textarea>
+
+<h2>Foreign key constraints</h2>
+<!-- Example
+(child_table, child_column, parent_table, parent_column)
+T_ABC,DEF_ID,T_DEF,ID
+T_GHI,DEF_ID,T_DEF,ID
+-->
+<textarea id="foreign_keys" rows="10" cols="70">
+
+</textarea>
+
+<br />
+<input type="submit" value="Generate" onclick="generate()" />
+<h2>Result</h2>
+<div id="result"></div>
+
+
+<script>
+    function generate() {
+        const result = document.getElementById('result');
+        try {
+            const table = generateTableData();
+            populateReferences(table);
+            result.innerText = 'const __tables = ' + JSON.stringify(table) + ';';
+        } catch (e) {
+            console.error(e);
+            result.innerText = 'Error: ' + e.message;
+        }
+    }
+
+    function generateTableData() {
+        const columns = document.getElementById('columns').value.split('\n');
+        if (!columns.length) {
+            throw new Error('Columns are empty');
+        }
+
+        const tableData = {};
+        columns.forEach(col => {
+            const columnEntries = col.split(',');
+            if (columnEntries.length < 3) {
+                if (!col) {
+                    return;
+                }
+                throw new Error('Column line must have at least three fields');
+            }
+
+            const tableName = columnEntries[0].trim();
+            if (!tableData[tableName]) {
+                tableData[tableName] = { alias: '', columns: {}, references: {}, highlights: {} };
+            }
+            const tableEntry = tableData[tableName];
+
+            const columnName = columnEntries[1].trim();
+            tableEntry.columns[columnName] = columnEntries[2].trim().toLowerCase();
+        });
+        return tableData;
+    }
+
+    function populateReferences(tableData) {
+        const constraints = document.getElementById('foreign_keys').value.split('\n');
+        if (!constraints.length) {
+            throw new Error('Foreign key constraints are empty');
+        }
+
+        constraints.forEach(fk => {
+            const fkEntries = fk.split(',');
+            if (fkEntries.length < 4) {
+                if (!fk) {
+                    return;
+                }
+                throw new Error('Column line must have at least three fields');
+            }
+
+            const parentTable = fkEntries[0].trim();
+            const parentColumn = fkEntries[1].trim();
+            const tableEntry = tableData[parentTable];
+            if (!tableEntry) {
+                throw new Error('Foreign key for table ' + parentTable + ' provided, but no such table is known');
+            } else if (!tableEntry.columns[parentColumn]) { // Sanity check
+                throw new Error('Foreign key ' + parentTable + '.' + parentColumn
+                    + ' provided for a column that is unknown');
+            }
+
+            const childTable = fkEntries[2].trim();
+            const childColumn = fkEntries[3].trim();
+            tableEntry.references[ parentColumn ] = {
+                table: childTable,
+                column: childColumn
+            };
+        });
+    }
+
+</script>
+</body>
+</html>

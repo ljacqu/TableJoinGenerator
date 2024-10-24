@@ -1,0 +1,4 @@
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
+FROM all_tab_columns
+WHERE owner = 'nightbot_quiz' -- CHANGE ME
+ORDER BY TABLE_NAME, COLUMN_ID;
