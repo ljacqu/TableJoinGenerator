@@ -533,7 +533,8 @@ function formatColumn(tableName, columnName, useColNameWithTable) {
         return `<span class="sql-column">${columnName}</span>`;
     }
 
-    const tableReference = __aliasFn(tableName) ?? formatTable(tableName);
+    const alias = __aliasFn(tableName);
+    const tableReference = alias ? alias : formatTable(tableName);
     return `${tableReference}.<span class="sql-column">${columnName}</span>`;
 }
 
