@@ -222,17 +222,26 @@ function createColumnFilterElem(table, column, colElem) {
 }
 
 function validateColumnFilterElem(table, column, value) {
-    const columnType = __tables[table].columns[column];
+    let columnType = __tables[table].columns[column];
+    if (columnType.startsWith('timestamp')) {
+        columnType = 'timestamp';
+    }
 
     switch (columnType) {
         case 'int':
         case 'tinyint':
         case 'decimal':
+        case 'number':
             if (value && value !== '!' && Number.isNaN(Number(value))) {
                 throw new Error('Invalid number');
             }
             break;
         case 'varchar':
+        case 'varchar2':
+        case 'timestamp':
+        case 'datetime':
+        case 'blob':
+        case 'clob':
             break;
         default:
             console.log(`Unhandled validation for ${columnType}`);
