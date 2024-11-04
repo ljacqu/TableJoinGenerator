@@ -517,8 +517,8 @@ function formatValueForWhereClause(value, table, column) {
         case 'int':
         case 'tinyint':
         case 'decimal':
+        case 'number':
             return `<span class="sql-number">${value}</span>`;
-        case 'varchar':
         default: // quote by default
             return `<span class="sql-text">'`
                 + value.replaceAll('\'', '\'\'').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
