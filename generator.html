@@ -97,7 +97,7 @@
 <div id="page">
     <div id="side">
         <div id="tables"></div>
-        <button onclick="createInitialTables();">Reset</button>
+        <button onclick="showInitialTables();">Reset</button>
         <button id="btn_agg" style="display: none" onclick="onClickAggregateButton(this)">Aggregate</button>
     </div>
     <div id="result">
@@ -117,7 +117,14 @@ const __aliasFn = function (tableName) {
 let __query = null;
 let __pastColumns = new Set();
 
-function createInitialTables() {
+function newElementWithClass(tagName, cssClassName) {
+    const elem = document.createElement(tagName);
+    elem.classList.add(cssClassName);
+    return elem;
+}
+
+/** Lists all tables, on click shows the table's columns for filtering. */
+function showInitialTables() {
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Tables</h3>';
     __query = null;
@@ -127,9 +134,8 @@ function createInitialTables() {
     updateQueryOnPage();
 
     for (const table in __tables) {
-        const btn = document.createElement('button');
+        const btn = newElementWithClass('button', 'btn-table');
         btn.innerText = table;
-        btn.classList.add('btn-table');
 
         btn.addEventListener('click', () => {
             if (btn.nextElementSibling.tagName === 'UL') {
@@ -138,7 +144,7 @@ function createInitialTables() {
                 showInitialColumns(table, btn);
             }
         });
-        btn.addEventListener('contextmenu', (e) => {
+        btn.addEventListener('contextmenu', e => {
             e.preventDefault();
             __query = { table: table };
             __pastColumns.add({
@@ -147,7 +153,7 @@ function createInitialTables() {
             });
             showRelatedColumns(table);
             updateQueryOnPage();
-        })
+        });
 
         tablesContainer.appendChild(btn);
         tablesContainer.appendChild(document.createElement('br'));
@@ -159,11 +165,9 @@ function showInitialColumns(table, btnElem) {
         elem.remove();
     }
 
-    const ul = document.createElement('ul');
-    ul.classList.add('columns');
+    const ul = newElementWithClass('ul', 'columns');
     for (const col in __tables[table].columns) {
-        const li = document.createElement('li');
-        li.classList.add('clicky');
+        const li = newElementWithClass('li', 'clicky');
         li.innerText = col;
         li.addEventListener('click', () => {
             createColumnFilterElem(table, col, li);
@@ -181,13 +185,10 @@ function showFilterColumnsSubQuery(table) {
 
     const title = document.createElement('h3');
     title.innerText = 'Filter subquery (' + table + ')';
-    document.getElementById('tables').append(title);
 
-    const ul = document.createElement('ul');
-    ul.classList.add('columns');
+    const ul = newElementWithClass('ul', 'columns');
     for (const col in __tables[table].columns) {
-        const li = document.createElement('li');
-        li.classList.add('clicky');
+        const li = newElementWithClass('li', 'clicky');
         li.innerText = col;
         li.addEventListener('click', () => {
             createColumnFilterElem(table, col, li, true);
@@ -195,7 +196,9 @@ function showFilterColumnsSubQuery(table) {
         ul.appendChild(li);
     }
 
-    document.getElementById('tables').append(ul);
+    const tablesContainer = document.getElementById('tables');
+    tablesContainer.append(title);
+    tablesContainer.append(ul);
 }
 
 function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
@@ -203,9 +206,8 @@ function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
         elem.remove();
     }
 
-    const inputElem = document.createElement('input');
+    const inputElem = newElementWithClass('input', 'where_input');
     inputElem.type = 'text';
-    inputElem.classList.add('where_input');
 
     const onSubmitFilter = () => {
         try {
@@ -238,15 +240,14 @@ function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
         updateQueryOnPage();
     };
 
-    inputElem.addEventListener('keydown', (event) => {
+    inputElem.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
             onSubmitFilter();
         }
     });
     colElem.after(inputElem);
 
-    const okBtn = document.createElement('button');
-    okBtn.classList.add('where_input');
+    const okBtn = newElementWithClass('button', 'where_input');
     okBtn.innerText = 'Go';
     okBtn.addEventListener('click', () => {
         onSubmitFilter();
@@ -328,6 +329,7 @@ function collectRelatedColumns(curTable) {
     return references;
 }
 
+/** Shows all (table, column) pairs that can be referenced from the current table. */
 function showRelatedColumns(curTable) {
     const references = collectRelatedColumns(curTable);
     document.getElementById('btn_agg').style.display = 'inline-block';
@@ -338,8 +340,7 @@ function showRelatedColumns(curTable) {
 
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
-    const ul = document.createElement('ul');
-    ul.classList.add('table-list');
+    const ul = newElementWithClass('ul', 'table-list');
     tablesContainer.append(ul);
 
     references.forEach(ref => {
@@ -363,8 +364,7 @@ function showRelatedColumns(curTable) {
         });
         li.append(btnLeftJoin);
 
-        const spanWithTableColumn = document.createElement('span');
-        spanWithTableColumn.classList.add('clicky');
+        const spanWithTableColumn = newElementWithClass('span', 'clicky');
         const cssClass = getClassForRelatedColumn(ref.targetTable, ref.targetColumn, prevCol);
         spanWithTableColumn.innerHTML = ` <span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
         li.append(spanWithTableColumn);
@@ -372,7 +372,7 @@ function showRelatedColumns(curTable) {
         spanWithTableColumn.addEventListener('click', () => {
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
-        spanWithTableColumn.addEventListener('contextmenu', (e) => {
+        spanWithTableColumn.addEventListener('contextmenu', e => {
             e.preventDefault();
             onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
@@ -406,14 +406,12 @@ function showLeftJoinColumns() {
 
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Left join</h3>';
-    const ul = document.createElement('ul');
-    ul.classList.add('table-list');
+    const ul = newElementWithClass('ul', 'table-list');
     tablesContainer.append(ul);
     references.forEach(ref => {
         const li = document.createElement('li');
 
-        const spanWithTableColumn = document.createElement('span');
-        spanWithTableColumn.classList.add('clicky');
+        const spanWithTableColumn = newElementWithClass('span', 'clicky');
         const cssClass = getClassForRelatedColumn(ref.targetTable, ref.targetColumn, false);
         spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} `;
         li.append(spanWithTableColumn);
@@ -421,7 +419,7 @@ function showLeftJoinColumns() {
         spanWithTableColumn.addEventListener('click', () => {
             onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
-        spanWithTableColumn.addEventListener('contextmenu', (e) => {
+        spanWithTableColumn.addEventListener('contextmenu', e => {
             e.preventDefault();
             onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
         });
@@ -460,11 +458,10 @@ function showPossibleSelectColumns(columnsBtn) {
     const ul = document.createElement('ul');
 
     columns.forEach(col => {
-        const li = document.createElement('li');
+        const li = newElementWithClass('li', 'clicky');
         li.innerText = col.table + '.' + col.column;
         li.dataset.table = col.table;
         li.dataset.column = col.column;
-        li.classList.add('clicky');
         if (col.active) {
             li.classList.add('active-column');
         }
@@ -608,10 +605,13 @@ function formatColumn(tableName, columnName, useColNameWithTable) {
 
 function produceSql(level, query) {
     const indent = '    '.repeat(level);
+    const nlIndent = '\n' + indent;
+    const useColNameWithTable = !!query.leftJoin;
+
     let result = indent + '<span class="sql-keyword">SELECT</span> ';
     if (query.select?.length > 0) {
         result += query.select
-            .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
+            .map(select => formatColumn(select.table, select.column, useColNameWithTable))
             .join('\n     , ');
         if (query.agg) {
             result += '\n     , <span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
@@ -624,28 +624,28 @@ function produceSql(level, query) {
         }
     }
 
-    result += '\n' + indent + '<span class="sql-keyword">FROM</span> ' + formatTable(query.table, !!query.leftJoin);
+    result += nlIndent + '<span class="sql-keyword">FROM</span> ' + formatTable(query.table, useColNameWithTable);
 
     if (query.leftJoin) {
         query.leftJoin.forEach(lj => {
-            result += '\n' + indent + '<span class="sql-keyword">LEFT JOIN</span> ' + formatTable(lj.targetTable, true)
-                + '\n' + indent + '  <span class="sql-keyword">ON</span> ' + formatColumn(lj.targetTable, lj.targetColumn, true)
+            result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + formatTable(lj.targetTable, true)
+                + nlIndent + '  <span class="sql-keyword">ON</span> ' + formatColumn(lj.targetTable, lj.targetColumn, true)
                 + ' = ' + formatColumn(lj.sourceTable, lj.sourceColumn, true);
         });
     }
 
     if (query.whereIn) {
-        result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.whereIn, !!query.leftJoin) + ' <span class="sql-keyword">IN</span> (';
+        result += nlIndent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.whereIn, useColNameWithTable) + ' <span class="sql-keyword">IN</span> (';
         result += '\n' + produceSql(level+1, query.sub);
-        result += '\n' + indent + ')';
+        result += nlIndent + ')';
     }
     if (query.where) {
         if (query.whereIn) { // already have a `WHERE`, now need an `AND`
-            result += '\n' + indent + '  <span class="sql-keyword">AND</span> ';
+            result += nlIndent + '  <span class="sql-keyword">AND</span> ';
         } else {
-            result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ';
+            result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
         }
-        result +=  formatColumn(query.table, query.where.column, !!query.leftJoin);
+        result +=  formatColumn(query.table, query.where.column, useColNameWithTable);
         if (!query.where.filter) {
             result += ' <span class="sql-keyword">IS NULL</span>';
         } else if (query.where.filter === '!') {
@@ -655,14 +655,14 @@ function produceSql(level, query) {
         }
     }
     if (query.agg && query.select?.length > 0) {
-        result += '\n' + indent + '<span class="sql-keyword">GROUP BY</span> ' + query.select
-            .map(select => formatColumn(select.table, select.column, !!query.leftJoin))
+        result += nlIndent + '<span class="sql-keyword">GROUP BY</span> ' + query.select
+            .map(select => formatColumn(select.table, select.column, useColNameWithTable))
             .join('\n       , ');
     }
     return result;
 }
 
-createInitialTables();
+showInitialTables();
 </script>
 </body>
 </html>
