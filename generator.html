@@ -102,7 +102,7 @@
     </div>
     <div id="result">
         <pre id="query"></pre>
-        <pre id="query_debug"></pre>
+        <pre id="query_debug" style="display: none"></pre>
     </div>
 </div>
 
@@ -174,7 +174,31 @@ function showInitialColumns(table, btnElem) {
     btnElem.after(ul);
 }
 
-function createColumnFilterElem(table, column, colElem) {
+function showFilterColumnsSubQuery(table) {
+    for (const elem of document.querySelectorAll('ul.columns')) {
+        elem.remove();
+    }
+
+    const title = document.createElement('h3');
+    title.innerText = 'Filter subquery (' + table + ')';
+    document.getElementById('tables').append(title);
+
+    const ul = document.createElement('ul');
+    ul.classList.add('columns');
+    for (const col in __tables[table].columns) {
+        const li = document.createElement('li');
+        li.classList.add('clicky');
+        li.innerText = col;
+        li.addEventListener('click', () => {
+            createColumnFilterElem(table, col, li, true);
+        });
+        ul.appendChild(li);
+    }
+
+    document.getElementById('tables').append(ul);
+}
+
+function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
     for (const elem of document.querySelectorAll('.where_input')) {
         elem.remove();
     }
@@ -191,18 +215,26 @@ function createColumnFilterElem(table, column, colElem) {
             return;
         }
 
-        __query = {
-            table: table,
-            where: {
+        if (forSubQuery) {
+            __query.sub.where = {
                 column: column,
                 filter: inputElem.value
-            }
-        };
+            };
+        } else {
+            __query = {
+                table: table,
+                where: {
+                    column: column,
+                    filter: inputElem.value
+                }
+            };
+        }
+
         __pastColumns.add({
             column: column,
             table: table
         });
-        showRelatedColumns(table);
+        showRelatedColumns(forSubQuery ? __query.table : table);
         updateQueryOnPage();
     };
 
@@ -315,8 +347,8 @@ function showRelatedColumns(curTable) {
 
         if (!__query.whereIn) {
             const btnWhereIn = document.createElement('button');
-            btnWhereIn.innerText = 'v';
-            btnWhereIn.title = 'keep table as select';
+            btnWhereIn.innerText = '⊆';
+            btnWhereIn.title = 'keep current table, filter by this table';
             btnWhereIn.addEventListener('click', () => {
                 onClickWhereIn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
             });
@@ -510,6 +542,7 @@ function onClickWhereIn(sourceColumn, targetTable, targetColumn) {
     };
 
     showRelatedColumns(__query.table);
+    showFilterColumnsSubQuery(targetTable);
     updateQueryOnPage();
 }
 
