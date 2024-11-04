@@ -102,6 +102,7 @@
     </div>
     <div id="result">
         <pre id="query"></pre>
+        <pre id="query_debug"></pre>
     </div>
 </div>
 
@@ -304,13 +305,23 @@ function showRelatedColumns(curTable) {
         : null;
 
     const tablesContainer = document.getElementById('tables');
-    tablesContainer.innerHTML = '<h3>Join/subqery table</h3>';
+    tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
     const ul = document.createElement('ul');
     ul.classList.add('table-list');
     tablesContainer.append(ul);
 
     references.forEach(ref => {
         const li = document.createElement('li');
+
+        if (!__query.whereIn) {
+            const btnWhereIn = document.createElement('button');
+            btnWhereIn.innerText = 'v';
+            btnWhereIn.title = 'keep table as select';
+            btnWhereIn.addEventListener('click', () => {
+                onClickWhereIn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
+            });
+            li.append(btnWhereIn);
+        }
 
         const btnLeftJoin = document.createElement('button');
         btnLeftJoin.innerText = '⟕';
@@ -488,6 +499,20 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
     updateQueryOnPage();
 }
 
+function onClickWhereIn(sourceColumn, targetTable, targetColumn) {
+    __query.whereIn = sourceColumn;
+    __query.sub = {
+        select: [{
+            column: targetColumn,
+            table: targetTable
+        }],
+        table: targetTable
+    };
+
+    showRelatedColumns(__query.table);
+    updateQueryOnPage();
+}
+
 function onClickAggregateButton(btn) {
     if (btn.classList.contains('btn-active')) {
         btn.classList.remove('btn-active');
@@ -501,6 +526,7 @@ function onClickAggregateButton(btn) {
 
 function updateQueryOnPage() {
     document.getElementById('query').innerHTML = generateQuery();
+    document.getElementById('query_debug').innerHTML = JSON.stringify(__query);
 }
 
 function generateQuery() {
@@ -579,8 +605,14 @@ function produceSql(level, query) {
         result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.whereIn, !!query.leftJoin) + ' <span class="sql-keyword">IN</span> (';
         result += '\n' + produceSql(level+1, query.sub);
         result += '\n' + indent + ')';
-    } else if (query.where) {
-        result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.where.column, !!query.leftJoin);
+    }
+    if (query.where) {
+        if (query.whereIn) { // already have a `WHERE`, now need an `AND`
+            result += '\n' + indent + '  <span class="sql-keyword">AND</span> ';
+        } else {
+            result += '\n' + indent + '<span class="sql-keyword">WHERE</span> ';
+        }
+        result +=  formatColumn(query.table, query.where.column, !!query.leftJoin);
         if (!query.where.filter) {
             result += ' <span class="sql-keyword">IS NULL</span>';
         } else if (query.where.filter === '!') {
