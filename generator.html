@@ -142,7 +142,7 @@ function showInitialTables() {
             if (btn.nextElementSibling.tagName === 'UL') {
                 btn.nextElementSibling.remove();
             } else {
-                showInitialColumns(table, btn);
+                showColumnsToFilterInitialTable(table, btn);
             }
         });
         btn.addEventListener('contextmenu', e => {
@@ -153,6 +153,7 @@ function showInitialTables() {
                 table: table
             });
             showRelatedColumns(table);
+            renderSelectColumnButtonOrColumns(true);
             updateQueryOnPage();
         });
 
@@ -161,7 +162,8 @@ function showInitialTables() {
     }
 }
 
-function showInitialColumns(table, btnElem) {
+/** Lists all columns of the given table to add a filter. Used when an initial table is selected. */
+function showColumnsToFilterInitialTable(table, btnElem) {
     for (const elem of document.querySelectorAll('ul.columns')) {
         elem.remove();
     }
@@ -171,7 +173,7 @@ function showInitialColumns(table, btnElem) {
         const li = newElementWithClass('li', 'clicky');
         li.innerText = col;
         li.addEventListener('click', () => {
-            createColumnFilterElem(table, col, li);
+            createColumnFilterElem(table, col, li, false);
         });
         ul.appendChild(li);
     }
@@ -202,7 +204,7 @@ function showFilterColumnsSubQuery(table) {
     tablesContainer.append(ul);
 }
 
-function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
+function createColumnFilterElem(table, column, colElem, forSubQuery) {
     for (const elem of document.querySelectorAll('.where_input')) {
         elem.remove();
     }
@@ -238,6 +240,7 @@ function createColumnFilterElem(table, column, colElem, forSubQuery=false) {
             table: table
         });
         showRelatedColumns(forSubQuery ? __query.table : table);
+        renderSelectColumnButtonOrColumns(!forSubQuery);
         updateQueryOnPage();
     };
 
@@ -384,14 +387,14 @@ function showRelatedColumns(curTable) {
 function collectUsedTablesInLeftJoinMode() {
     const tables = new Set();
     tables.add(__query.table);
-    for (const leftJoin of __query.leftJoin) {
+    for (const leftJoin of (__query.leftJoin ?? [])) {
         tables.add(leftJoin.sourceTable);
         tables.add(leftJoin.targetTable);
     }
     return tables;
 }
 
-function showLeftJoinColumns() {
+function showLeftJoinColumns(isFirstLeftJoin) {
     const tables = collectUsedTablesInLeftJoinMode();
     document.getElementById('btn_agg').style.display = 'inline-block';
 
@@ -405,6 +408,7 @@ function showLeftJoinColumns() {
         }
     });
 
+    const showColumnsButton = isFirstLeftJoin || !!document.getElementById('select-col-btn');
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Left join</h3>';
     const ul = newElementWithClass('ul', 'table-list');
@@ -427,16 +431,27 @@ function showLeftJoinColumns() {
         ul.appendChild(li);
     });
 
-    const columnsButton = document.createElement('button');
-    columnsButton.innerText = 'Columns';
-    columnsButton.addEventListener('click', () => {
-        showPossibleSelectColumns(columnsButton);
-    });
-    ul.after(columnsButton);
+    renderSelectColumnButtonOrColumns(showColumnsButton);
+}
+
+function renderSelectColumnButtonOrColumns(showColumnsButton) {
+    const tablesContainer = document.getElementById('tables');
+    if (showColumnsButton) {
+        const columnsButton = document.createElement('button');
+        columnsButton.id = 'select-col-btn';
+        columnsButton.innerText = 'Select columns';
+        columnsButton.addEventListener('click', () => {
+            tablesContainer.append(createListElementWithSelectableColumns());
+            columnsButton.remove();
+        });
+        tablesContainer.append(columnsButton);
+    } else {
+        tablesContainer.append(createListElementWithSelectableColumns());
+    }
 }
 
 // When in 'left join' mode, offer to select only some columns
-function showPossibleSelectColumns(columnsBtn) {
+function createListElementWithSelectableColumns() {
     if (!__query.select) {
         __query.select = [];
     }
@@ -487,14 +502,15 @@ function showPossibleSelectColumns(columnsBtn) {
         ul.append(li);
     });
 
-    columnsBtn.after(title);
-    title.after(ul);
-    columnsBtn.remove();
-    updateQueryOnPage();
+    const div = document.createElement('div');
+    div.append(title);
+    div.append(ul);
+    return div;
 }
 
 function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetColumn) {
-    if (!__query.leftJoin) {
+    const isFirstLeftJoin = !__query.leftJoin;
+    if (isFirstLeftJoin) {
         __query.leftJoin = [];
     }
 
@@ -505,10 +521,11 @@ function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetCol
         targetColumn: targetColumn
     });
 
-    showLeftJoinColumns();
+    showLeftJoinColumns(isFirstLeftJoin);
     updateQueryOnPage();
 }
 
+/** Changes the current query to a subquery filtering the given (targetTable, targetColumn). */
 function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
     __query.select = [
         {
@@ -526,6 +543,7 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
 
     document.getElementById('btn_agg').classList.remove('btn-active');
     showRelatedColumns(targetTable);
+    renderSelectColumnButtonOrColumns(true); // query level is "reset", so hide columns again
     updateQueryOnPage();
 }
 
@@ -539,8 +557,10 @@ function onClickWhereIn(sourceColumn, targetTable, targetColumn) {
         table: targetTable
     };
 
+    const hasSelectColumnsButton = !!document.getElementById('select-col-btn');
     showRelatedColumns(__query.table);
     showFilterColumnsSubQuery(targetTable);
+    renderSelectColumnButtonOrColumns(hasSelectColumnsButton);
     updateQueryOnPage();
 }
 
