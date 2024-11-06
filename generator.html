@@ -66,6 +66,11 @@
         #tables {
             margin-bottom: 1em;
         }
+        #version {
+            float: right;
+            font-size: 0.8em;
+            color: #ac8;
+        }
         .clicky {
             cursor: pointer;
         }
@@ -94,6 +99,7 @@
 </head>
 <body>
 
+<div id="version"></div>
 <div id="page">
     <div id="side">
         <div id="tables"></div>
@@ -107,16 +113,32 @@
 </div>
 
 <script>
+// -------------
 // Configuration
+// -------------
+
 const __schema = 'nightbot_quiz';
 const __aliasFn = function (tableName) {
     return __tables[tableName].alias;
 };
+
+// Show internal query object (__query) as JSON
 const __debug = false;
+
+// Show the '⊆' button that ADDS a subquery to the current table. Can be hidden if there are too many buttons,
+// as clicking on a table will take the current query as subquery, which is possible in more situations than
+// the '⊆' button. Hide to simplify the UI.
+const __showWhereInButton = true;
+
+// -------------
+// End config
+// -------------
+const __version = '20241106';
 
 // State
 let __query = null;
 let __pastColumns = new Set();
+
 
 function newElementWithClass(tagName, cssClassName) {
     const elem = document.createElement(tagName);
@@ -350,7 +372,7 @@ function showRelatedColumns(curTable) {
     references.forEach(ref => {
         const li = document.createElement('li');
 
-        if (!__query.whereIn) {
+        if (__showWhereInButton && !__query.whereIn) {
             const btnWhereIn = document.createElement('button');
             btnWhereIn.innerText = '⊆';
             btnWhereIn.title = 'keep current table, filter by this table';
@@ -686,6 +708,8 @@ function produceSql(level, query) {
 }
 
 showInitialTables();
+const versionElem = document.getElementById('version');
+versionElem.innerText = `v. ${__version}`;
 </script>
 </body>
 </html>
