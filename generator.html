@@ -60,7 +60,7 @@
             display: inline-block;
             padding: 20px;
         }
-        #query:empty {
+        #query:empty, #query_debug:empty {
             display: none;
         }
         #tables {
@@ -102,7 +102,7 @@
     </div>
     <div id="result">
         <pre id="query"></pre>
-        <pre id="query_debug" style="display: none"></pre>
+        <div id="query_debug"></div>
     </div>
 </div>
 
@@ -112,6 +112,7 @@ const __schema = 'nightbot_quiz';
 const __aliasFn = function (tableName) {
     return __tables[tableName].alias;
 };
+const __debug = false;
 
 // State
 let __query = null;
@@ -556,7 +557,9 @@ function onClickAggregateButton(btn) {
 
 function updateQueryOnPage() {
     document.getElementById('query').innerHTML = generateQuery();
-    document.getElementById('query_debug').innerHTML = JSON.stringify(__query);
+    if (__debug) {
+        document.getElementById('query_debug').innerHTML = JSON.stringify(__query).replaceAll('{', '{ ');
+    }
 }
 
 function generateQuery() {
