@@ -137,6 +137,8 @@ const __showWhereInButton = true;
 // -------------
 const __version = '20241106';
 
+const m_formatter = new QB.Formatter(__aliasFn, __tables, __schema);
+
 // State
 let __query = null;
 let __pastColumns = new Set();
@@ -600,113 +602,10 @@ function onClickAggregateButton(btn) {
 }
 
 function updateQueryOnPage() {
-    document.getElementById('query').innerHTML = generateQuery();
+    document.getElementById('query').innerHTML = m_formatter.generateQuery(__query);
     if (__debug) {
         document.getElementById('query_debug').innerHTML = JSON.stringify(__query).replaceAll('{', '{ ');
     }
-}
-
-function generateQuery() {
-    if (!__query) {
-        return '';
-    }
-
-    return produceSql(0, __query) + ';';
-}
-
-function formatValueForWhereClause(value, table, column) {
-    const columnType = __tables[table].columns[column];
-    switch (columnType) {
-        case 'int':
-        case 'tinyint':
-        case 'decimal':
-        case 'number':
-            return `<span class="sql-number">${value}</span>`;
-        default: // quote by default
-            return `<span class="sql-text">'`
-                + value.replaceAll('\'', '\'\'').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
-                + `'</span>`;
-    }
-}
-
-function formatTable(tableName, includeAlias) {
-    const tableReference = __schema ? `${__schema}.${tableName}` : tableName;
-    if (includeAlias) {
-        const alias = __aliasFn(tableName);
-        if (alias) {
-            return tableReference + ' ' + alias;
-        }
-    }
-    return tableReference;
-}
-
-function formatColumn(tableName, columnName, useColNameWithTable) {
-    if (!useColNameWithTable) {
-        return `<span class="sql-column">${columnName}</span>`;
-    }
-
-    const alias = __aliasFn(tableName);
-    const tableReference = alias ? alias : formatTable(tableName);
-    return `${tableReference}.<span class="sql-column">${columnName}</span>`;
-}
-
-function produceSql(level, query) {
-    const indent = '    '.repeat(level);
-    const nlIndent = '\n' + indent;
-    const useColNameWithTable = !!query.leftJoin;
-
-    let result = indent + '<span class="sql-keyword">SELECT</span> ';
-    if (query.select?.length > 0) {
-        result += query.select
-            .map(select => formatColumn(select.table, select.column, useColNameWithTable))
-            .join('\n     , ');
-        if (query.agg) {
-            result += '\n     , <span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
-        }
-    } else {
-        if (query.agg) {
-            result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
-        } else {
-            result += '<span class="sql-star">*</span>';
-        }
-    }
-
-    result += nlIndent + '<span class="sql-keyword">FROM</span> ' + formatTable(query.table, useColNameWithTable);
-
-    if (query.leftJoin) {
-        query.leftJoin.forEach(lj => {
-            result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + formatTable(lj.targetTable, true)
-                + nlIndent + '  <span class="sql-keyword">ON</span> ' + formatColumn(lj.targetTable, lj.targetColumn, true)
-                + ' = ' + formatColumn(lj.sourceTable, lj.sourceColumn, true);
-        });
-    }
-
-    if (query.whereIn) {
-        result += nlIndent + '<span class="sql-keyword">WHERE</span> ' + formatColumn(query.table, query.whereIn, useColNameWithTable) + ' <span class="sql-keyword">IN</span> (';
-        result += '\n' + produceSql(level+1, query.sub);
-        result += nlIndent + ')';
-    }
-    if (query.where) {
-        if (query.whereIn) { // already have a `WHERE`, now need an `AND`
-            result += nlIndent + '  <span class="sql-keyword">AND</span> ';
-        } else {
-            result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
-        }
-        result +=  formatColumn(query.table, query.where.column, useColNameWithTable);
-        if (!query.where.filter) {
-            result += ' <span class="sql-keyword">IS NULL</span>';
-        } else if (query.where.filter === '!') {
-            result += ' <span class="sql-keyword">IS NOT NULL</span>';
-        } else {
-            result += ' = ' + formatValueForWhereClause(query.where.filter, query.table, query.where.column);
-        }
-    }
-    if (query.agg && query.select?.length > 0) {
-        result += nlIndent + '<span class="sql-keyword">GROUP BY</span> ' + query.select
-            .map(select => formatColumn(select.table, select.column, useColNameWithTable))
-            .join('\n       , ');
-    }
-    return result;
 }
 
 // Set up button onclick behavior
