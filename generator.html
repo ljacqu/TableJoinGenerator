@@ -112,7 +112,9 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+import {QueryGenerator} from "./dist/QueryGenerator.js";
+
 // -------------
 // Configuration
 // -------------
@@ -709,7 +711,7 @@ function produceSql(level, query) {
 
 showInitialTables();
 const versionElem = document.getElementById('version');
-versionElem.innerText = `v. ${__version}`;
+versionElem.innerText = QueryGenerator.createVersionString(__version);
 </script>
 </body>
 </html>
