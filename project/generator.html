@@ -112,8 +112,8 @@
     </div>
 </div>
 
-<script type="module">
-import {QueryGenerator} from "./QueryGenerator.js";
+<script src="build.js"></script>
+<script>
 
 // -------------
 // Configuration
@@ -717,7 +717,7 @@ aggregateButton.addEventListener('click', () => onClickAggregateButton(aggregate
 // Initialization
 showInitialTables();
 const versionElem = document.getElementById('version');
-versionElem.innerText = QueryGenerator.createVersionString(__version);
+versionElem.innerText = QB.QueryGenerator.createVersionString(__version);
 </script>
 </body>
 </html>
