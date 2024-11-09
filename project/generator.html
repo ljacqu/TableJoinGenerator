@@ -188,7 +188,7 @@ function showColumnsToFilterInitialTable(table, btnElem) {
     }
 
     const ul = newElementWithClass('ul', 'columns');
-    for (const col in __tables[table].columns) {
+    for (const col in QB.TableDefinitions.getColumns(table)) {
         const li = newElementWithClass('li', 'clicky');
         li.innerText = col;
         li.addEventListener('click', () => {
@@ -209,7 +209,7 @@ function showFilterColumnsSubQuery(table) {
     title.innerText = 'Filter subquery (' + table + ')';
 
     const ul = newElementWithClass('ul', 'columns');
-    for (const col in __tables[table].columns) {
+    for (const col in QB.TableDefinitions.getColumns(table)) {
         const li = newElementWithClass('li', 'clicky');
         li.innerText = col;
         li.addEventListener('click', () => {
@@ -266,7 +266,7 @@ function createColumnFilterElem(table, column, colElem, forSubQuery) {
 }
 
 function validateColumnFilterElem(table, column, value) {
-    let columnType = __tables[table].columns[column];
+    let columnType = QB.TableDefinitions.getColumnType(table, column);
     if (columnType.startsWith('timestamp')) {
         columnType = 'timestamp';
     }
@@ -311,7 +311,7 @@ function collectRelatedColumns(curTable) {
     const references = [];
 
     // Add references from the current table
-    Object.entries(__tables[curTable].references).forEach(([sourceColumn, reference]) => {
+    Object.entries(QB.TableDefinitions.getReferences(curTable)).forEach(([sourceColumn, reference]) => {
         references.push({
             sourceTable: curTable,
             sourceColumn: sourceColumn,
@@ -321,7 +321,7 @@ function collectRelatedColumns(curTable) {
     });
 
     // Check other tables for references targeting the current table
-    Object.entries(__tables).forEach(([table, definition]) => {
+    Object.entries(QB.TableDefinitions.getAllTables()).forEach(([table, definition]) => {
         if (table !== curTable) {
             Object.entries(definition.references).forEach(([targetColumn, reference]) => {
                 if (reference.table === curTable) {
@@ -450,7 +450,7 @@ function createListElementWithSelectableColumns() {
     const tables = m_query.collectTopLevelTables();
     const columns = [];
     tables.forEach(table => {
-        for (const col in __tables[table].columns) {
+        for (const col in QB.TableDefinitions.getColumns(table)) {
             columns.push({
                 table: table,
                 column: col,
