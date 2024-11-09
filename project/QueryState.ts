@@ -1,0 +1,167 @@
+namespace QB {
+
+    export class QueryState {
+
+        private query?: Query;
+        private pastColumns: Set<Column> = new Set();
+
+        clearState(): void {
+            this.query = undefined;
+            this.pastColumns = new Set();
+        }
+
+        selectTable(table: string): void {
+            this.query = {table};
+            this.pastColumns.add({table: table, column: ''});
+        }
+
+        selectTableWithFilter(table: string, column: string, filter: string): void {
+            this.query = {
+                table,
+                where: { column, filter }
+            };
+            this.pastColumns.add({table, column});
+        }
+
+        addFilterToSubQuery(column: string, filter: string): void {
+            if (!this.query?.sub) {
+                throw new Error('Expect subquery to be set!');
+            }
+
+            this.query.sub.where = { column, filter };
+            this.pastColumns.add({
+                table: this.query.sub.table,
+                column: column
+            });
+        }
+
+        addSuperQuery(column: string, parentTable: string, parentColumn: string): void {
+            if (!this.query) {
+                throw new Error('Query must be defined');
+            }
+
+            this.query.select = [{
+                table: this.query.table,
+                column: column
+            }];
+            this.query.aggregate = false;
+
+            this.query = {
+                table: parentTable,
+                whereIn: parentColumn,
+                sub: this.query
+            };
+            // TODO: past columns?
+        }
+
+        addSubQuery(column: string, childTable: string, childColumn: string): void {
+            if (!this.query) {
+                throw new Error('Query must be defined');
+            }
+
+            this.query.whereIn = column;
+            this.query.sub = {
+                select: [{column: childColumn, table: childTable}],
+                table: childTable
+            };
+            // TODO: past columns?
+        }
+
+        addLeftJoin(sourceTable: string, sourceColumn: string, targetTable: string, targetColumn: string): void {
+            if (!this.query!.leftJoin) {
+                this.query!.leftJoin = [];
+            }
+            this.query!.leftJoin.push({
+                sourceTable, sourceColumn, targetTable, targetColumn
+            });
+        }
+
+        setAggregate(aggregate: boolean): void {
+            this.query!.aggregate = aggregate;
+        }
+
+        clearColumnSelects(): void {
+            this.query!.select = [];
+        }
+
+        addColumnSelect(table: string, column: string): void {
+            if (!this.query!.select) {
+                this.query!.select = [];
+            }
+            this.query!.select.push({table, column});
+        }
+
+        // ---------
+        // Getters
+        // ---------
+
+        getCurrentSelectedTable(): string {
+            return this.query!.table;
+        }
+
+        collectTopLevelTables(): Set<string> {
+            const tables = new Set<string>();
+            tables.add(this.query!.table);
+            if (this.query!.leftJoin) {
+                for (const leftJoin of this.query!.leftJoin) {
+                    tables.add(leftJoin.sourceTable);
+                    tables.add(leftJoin.targetTable);
+                }
+            }
+            return tables;
+        }
+
+        hasLeftJoin(): boolean {
+            return !!this.query?.leftJoin?.length;
+        }
+
+        hasWhereInClause(): boolean {
+            return !!this.query?.whereIn;
+        }
+
+        hasColumnSelect(table: string, column: string): boolean {
+            if (!this.query || !this.query.select) {
+                return false;
+            }
+            return this.query.select.some(select => select.table === table && select.column === column);
+        }
+
+        getQuery(): Query | null {
+            return this.query || null;
+        }
+
+        getPreviousColumn(): Column | null { // TODO: Check if this makes sense
+            if (this.query && this.query.sub) {
+                const selects = this.query.sub.select;
+                return selects ? selects[0] : null;
+            }
+            return null;
+        }
+
+        getPastColumns(): Set<Column> {
+            return this.pastColumns;
+        }
+    }
+
+    export type Query = {
+        select?: Column[];
+        table: string;
+        leftJoin?: QueryLeftJoin[];
+        where?: QueryWhere;
+        whereIn?: string;
+        sub?: Query;
+        aggregate?: boolean;
+    };
+
+    export type QueryWhere = {
+        column: string;
+        filter: string;
+    };
+
+    export type QueryLeftJoin = {
+        sourceTable:  string;
+        sourceColumn: string;
+        targetTable:  string;
+        targetColumn: string;
+    };
+}

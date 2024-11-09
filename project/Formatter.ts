@@ -26,29 +26,28 @@ namespace QB {
             return `${tableReference}.<span class="sql-column">${columnName}</span>`;
         }
 
-        generateQuery(query?: any): string {
+        generateQuery(query?: Query) {
             if (!query) {
                 return '';
             }
             return this.produceSql(0, query);
         }
 
-        // TODO: add type to `query`
-        private produceSql(level: number, query): string {
+        private produceSql(level: number, query: Query): string {
             const indent = '    '.repeat(level);
             const nlIndent = '\n' + indent;
             const useColNameWithTable = !!query.leftJoin;
 
             let result = indent + '<span class="sql-keyword">SELECT</span> ';
-            if (query.select?.length > 0) {
-                result += query.select
+            if (!!query.select?.length) {
+                result += query.select!
                     .map(select => this.formatColumn(select.table, select.column, useColNameWithTable))
                     .join('\n     , ');
-                if (query.agg) {
+                if (query.aggregate) {
                     result += '\n     , <span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
                 }
             } else {
-                if (query.agg) {
+                if (query.aggregate) {
                     result += '<span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
                 } else {
                     result += '<span class="sql-star">*</span>';
@@ -67,7 +66,7 @@ namespace QB {
 
             if (query.whereIn) {
                 result += nlIndent + '<span class="sql-keyword">WHERE</span> ' + this.formatColumn(query.table, query.whereIn, useColNameWithTable) + ' <span class="sql-keyword">IN</span> (';
-                result += '\n' + this.produceSql(level + 1, query.sub);
+                result += '\n' + this.produceSql(level + 1, query.sub!);
                 result += nlIndent + ')';
             }
             if (query.where) {
@@ -85,8 +84,8 @@ namespace QB {
                     result += ' = ' + this.formatValueForWhereClause(query.where.filter, query.table, query.where.column);
                 }
             }
-            if (query.agg && query.select?.length > 0) {
-                result += nlIndent + '<span class="sql-keyword">GROUP BY</span> ' + query.select
+            if (query.aggregate && !!query.select?.length) {
+                result += nlIndent + '<span class="sql-keyword">GROUP BY</span> ' + query.select!
                     .map(select => this.formatColumn(select.table, select.column, useColNameWithTable))
                     .join('\n       , ');
             }

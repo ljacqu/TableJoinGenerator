@@ -124,7 +124,7 @@ const __aliasFn = function (tableName) {
     return __tables[tableName].alias;
 };
 
-// Show internal query object (__query) as JSON
+// Show internal query object as JSON
 const __debug = false;
 
 // Show the '⊆' button that ADDS a subquery to the current table. Can be hidden if there are too many buttons,
@@ -139,10 +139,7 @@ const __version = '20241109';
 
 QB.TableDefinitions.init(__tables);
 const m_formatter = new QB.Formatter(__aliasFn, __schema);
-
-// State
-let __query = null;
-let __pastColumns = new Set();
+const m_query = new QB.QueryState();
 
 
 function newElementWithClass(tagName, cssClassName) {
@@ -155,8 +152,7 @@ function newElementWithClass(tagName, cssClassName) {
 function showInitialTables() {
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Tables</h3>';
-    __query = null;
-    __pastColumns = new Set();
+    m_query.clearState();
     document.getElementById('btn_agg').style.display = 'none';
     document.getElementById('btn_agg').classList.remove('btn-active');
     updateQueryOnPage();
@@ -174,11 +170,7 @@ function showInitialTables() {
         });
         btn.addEventListener('contextmenu', e => {
             e.preventDefault();
-            __query = { table: table };
-            __pastColumns.add({
-                column: null,
-                table: table
-            });
+            m_query.selectTable(table);
             showRelatedColumns(table);
             renderSelectColumnButtonOrColumns(true);
             updateQueryOnPage();
@@ -248,25 +240,12 @@ function createColumnFilterElem(table, column, colElem, forSubQuery) {
         }
 
         if (forSubQuery) {
-            __query.sub.where = {
-                column: column,
-                filter: inputElem.value
-            };
+            m_query.addFilterToSubQuery(column, inputElem.value);
         } else {
-            __query = {
-                table: table,
-                where: {
-                    column: column,
-                    filter: inputElem.value
-                }
-            };
+            m_query.selectTableWithFilter(table, column, inputElem.value);
         }
 
-        __pastColumns.add({
-            column: column,
-            table: table
-        });
-        showRelatedColumns(forSubQuery ? __query.table : table);
+        showRelatedColumns(forSubQuery ? m_query.getCurrentSelectedTable() : table);
         renderSelectColumnButtonOrColumns(!forSubQuery);
         updateQueryOnPage();
     };
@@ -320,7 +299,7 @@ function getClassForRelatedColumn(table, column, prevCol) {
     if (prevCol && prevCol.table === table && prevCol.column === column) {
         return 'rc-prev';
     }
-    for (const pastColumn of __pastColumns) {
+    for (const pastColumn of m_query.getPastColumns()) {
         if (pastColumn.table === table) {
             return 'rc-past';
         }
@@ -365,9 +344,7 @@ function showRelatedColumns(curTable) {
     const references = collectRelatedColumns(curTable);
     document.getElementById('btn_agg').style.display = 'inline-block';
 
-    const prevCol = __query.sub
-        ? {column: __query.sub.select, table: __query.sub.table}
-        : null;
+    const prevCol = m_query.getPreviousColumn();
 
     const tablesContainer = document.getElementById('tables');
     tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
@@ -377,7 +354,7 @@ function showRelatedColumns(curTable) {
     references.forEach(ref => {
         const li = document.createElement('li');
 
-        if (__showWhereInButton && !__query.whereIn) {
+        if (__showWhereInButton && !m_query.hasWhereInClause()) {
             const btnWhereIn = document.createElement('button');
             btnWhereIn.innerText = '⊆';
             btnWhereIn.title = 'keep current table, filter by this table';
@@ -411,18 +388,8 @@ function showRelatedColumns(curTable) {
     });
 }
 
-function collectUsedTablesInLeftJoinMode() {
-    const tables = new Set();
-    tables.add(__query.table);
-    for (const leftJoin of (__query.leftJoin ?? [])) {
-        tables.add(leftJoin.sourceTable);
-        tables.add(leftJoin.targetTable);
-    }
-    return tables;
-}
-
 function showLeftJoinColumns(isFirstLeftJoin) {
-    const tables = collectUsedTablesInLeftJoinMode();
+    const tables = m_query.collectTopLevelTables();
     document.getElementById('btn_agg').style.display = 'inline-block';
 
     const references = [];
@@ -479,18 +446,15 @@ function renderSelectColumnButtonOrColumns(showColumnsButton) {
 
 // When in 'left join' mode, offer to select only some columns
 function createListElementWithSelectableColumns() {
-    if (!__query.select) {
-        __query.select = [];
-    }
 
-    const tables = collectUsedTablesInLeftJoinMode();
+    const tables = m_query.collectTopLevelTables();
     const columns = [];
     tables.forEach(table => {
         for (const col in __tables[table].columns) {
             columns.push({
                 table: table,
                 column: col,
-                active: __query.select.some(select => table === select.table && col === select.column)
+                active: m_query.hasColumnSelect(table, col)
             });
         }
     });
@@ -515,13 +479,10 @@ function createListElementWithSelectableColumns() {
                 li.classList.add('active-column');
             }
 
-            __query.select = [];
+            m_query.clearColumnSelects();
             for (const column of ul.children) {
                 if (column.classList.contains('active-column')) {
-                    __query.select.push({
-                        table: column.dataset.table,
-                        column: column.dataset.column
-                    });
+                    m_query.addColumnSelect(column.dataset.table, column.dataset.column);
                 }
             }
             updateQueryOnPage();
@@ -536,37 +497,15 @@ function createListElementWithSelectableColumns() {
 }
 
 function onClickLeftJoinColumn(sourceTable, sourceColumn, targetTable, targetColumn) {
-    const isFirstLeftJoin = !__query.leftJoin;
-    if (isFirstLeftJoin) {
-        __query.leftJoin = [];
-    }
-
-    __query.leftJoin.push({
-        sourceTable: sourceTable,
-        sourceColumn: sourceColumn,
-        targetTable: targetTable,
-        targetColumn: targetColumn
-    });
-
+    const isFirstLeftJoin = m_query.hasLeftJoin();
+    m_query.addLeftJoin(sourceTable, sourceColumn, targetTable, targetColumn);
     showLeftJoinColumns(isFirstLeftJoin);
     updateQueryOnPage();
 }
 
 /** Changes the current query to a subquery filtering the given (targetTable, targetColumn). */
 function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
-    __query.select = [
-        {
-            table: __query.table, // table is redundant here, but is needed in leftJoin mode
-            column: sourceColumn
-        }
-    ];
-    __query.agg = false;
-
-    __query = {
-        table: targetTable,
-        whereIn: targetColumn,
-        sub: __query
-    };
+    m_query.addSuperQuery(sourceColumn, targetTable, targetColumn);
 
     document.getElementById('btn_agg').classList.remove('btn-active');
     showRelatedColumns(targetTable);
@@ -575,17 +514,11 @@ function onClickReferenceColumn(sourceColumn, targetTable, targetColumn) {
 }
 
 function onClickWhereIn(sourceColumn, targetTable, targetColumn) {
-    __query.whereIn = sourceColumn;
-    __query.sub = {
-        select: [{
-            column: targetColumn,
-            table: targetTable
-        }],
-        table: targetTable
-    };
+    // TODO: Revise function names (child/sub would be clearer)
+    m_query.addSubQuery(sourceColumn, targetTable, targetColumn);
 
     const hasSelectColumnsButton = !!document.getElementById('select-col-btn');
-    showRelatedColumns(__query.table);
+    showRelatedColumns(m_query.getCurrentSelectedTable());
     showFilterColumnsSubQuery(targetTable);
     renderSelectColumnButtonOrColumns(hasSelectColumnsButton);
     updateQueryOnPage();
@@ -594,18 +527,18 @@ function onClickWhereIn(sourceColumn, targetTable, targetColumn) {
 function onClickAggregateButton(btn) {
     if (btn.classList.contains('btn-active')) {
         btn.classList.remove('btn-active');
-        __query.agg = false;
+        m_query.setAggregate(false);
     } else {
         btn.classList.add('btn-active');
-        __query.agg = true;
+        m_query.setAggregate(true);
     }
     updateQueryOnPage();
 }
 
 function updateQueryOnPage() {
-    document.getElementById('query').innerHTML = m_formatter.generateQuery(__query);
+    document.getElementById('query').innerHTML = m_formatter.generateQuery(m_query.getQuery());
     if (__debug) {
-        document.getElementById('query_debug').innerHTML = JSON.stringify(__query).replaceAll('{', '{ ');
+        document.getElementById('query_debug').innerHTML = JSON.stringify(m_query.getQuery()).replaceAll('{', '{ ');
     }
 }
 
