@@ -48,7 +48,7 @@ namespace QB {
 
             this.query = {
                 table: parentTable,
-                whereIn: parentColumn,
+                subqueryFilterColumn: parentColumn,
                 sub: this.query
             };
             // TODO: past columns?
@@ -59,7 +59,7 @@ namespace QB {
                 throw new Error('Query must be defined');
             }
 
-            this.query.whereIn = column;
+            this.query.subqueryFilterColumn = column;
             this.query.sub = {
                 select: [{column: childColumn, table: childTable}],
                 table: childTable
@@ -116,7 +116,7 @@ namespace QB {
         }
 
         hasWhereInClause(): boolean {
-            return !!this.query?.whereIn;
+            return !!this.query?.subqueryFilterColumn;
         }
 
         hasColumnSelect(table: string, column: string): boolean {
@@ -144,12 +144,19 @@ namespace QB {
     }
 
     export type Query = {
+        /** Columns to select. Empty/undef. = SELECT * */
         select?: Column[];
+        /** Table to reference in the FROM section. */
         table: string;
+        /** Tables to left join. */
         leftJoin?: QueryLeftJoin[];
+        /** Column filters. */
         where?: QueryWhere;
-        whereIn?: string;
+        /** Column the subquery relates to -- (WHERE ${subqueryFilterColumn} IN (${sub}) */
+        subqueryFilterColumn?: string;
+        /** Subquery. */
         sub?: Query;
+        /** If true, adds a COUNT() in the select. */
         aggregate?: boolean;
     };
 

@@ -26,11 +26,11 @@ namespace QB {
             return `${tableReference}.<span class="sql-column">${columnName}</span>`;
         }
 
-        generateQuery(query?: Query) {
+        generateQuery(query?: Query): string {
             if (!query) {
                 return '';
             }
-            return this.produceSql(0, query);
+            return this.produceSql(0, query) + ';';
         }
 
         private produceSql(level: number, query: Query): string {
@@ -64,13 +64,16 @@ namespace QB {
                 });
             }
 
-            if (query.whereIn) {
-                result += nlIndent + '<span class="sql-keyword">WHERE</span> ' + this.formatColumn(query.table, query.whereIn, useColNameWithTable) + ' <span class="sql-keyword">IN</span> (';
-                result += '\n' + this.produceSql(level + 1, query.sub!);
-                result += nlIndent + ')';
+            if (query.subqueryFilterColumn) {
+                result += nlIndent + '<span class="sql-keyword">WHERE</span> '
+                    + this.formatColumn(query.table, query.subqueryFilterColumn, useColNameWithTable)
+                    + ' <span class="sql-keyword">IN</span> ('
+                    + '\n' + this.produceSql(level + 1, query.sub!)
+                    + nlIndent + ')';
             }
+
             if (query.where) {
-                if (query.whereIn) { // already have a `WHERE`, now need an `AND`
+                if (query.subqueryFilterColumn) { // already have a `WHERE`, now need an `AND`
                     result += nlIndent + '  <span class="sql-keyword">AND</span> ';
                 } else {
                     result += nlIndent + '<span class="sql-keyword">WHERE</span> ';

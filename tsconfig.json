@@ -6,7 +6,6 @@
     "rootDir": "./project",
     "outFile": "./project/build.js",
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
     "strict": true,
     "skipLibCheck": true
   },
