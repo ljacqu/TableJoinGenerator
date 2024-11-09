@@ -103,8 +103,8 @@
 <div id="page">
     <div id="side">
         <div id="tables"></div>
-        <button onclick="showInitialTables();">Reset</button>
-        <button id="btn_agg" style="display: none" onclick="onClickAggregateButton(this)">Aggregate</button>
+        <button id="btn_reset">Reset</button>
+        <button id="btn_agg" style="display: none">Aggregate</button>
     </div>
     <div id="result">
         <pre id="query"></pre>
@@ -709,6 +709,12 @@ function produceSql(level, query) {
     return result;
 }
 
+// Set up button onclick behavior
+document.getElementById('btn_reset').addEventListener('click', () => showInitialTables());
+const aggregateButton = document.getElementById('btn_agg');
+aggregateButton.addEventListener('click', () => onClickAggregateButton(aggregateButton));
+
+// Initialization
 showInitialTables();
 const versionElem = document.getElementById('version');
 versionElem.innerText = QueryGenerator.createVersionString(__version);
