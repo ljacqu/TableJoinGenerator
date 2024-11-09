@@ -2,11 +2,10 @@ namespace QB {
 
     export class Formatter {
 
-        // TODO: Remove __tables as member
-        constructor(private aliasFn: Function, private __tables, private schema?: string) {
+        constructor(private aliasFn: Function, private schema?: string) {
         }
 
-        formatTable(tableName: string, includeAlias: boolean = false): string {
+        private formatTable(tableName: string, includeAlias: boolean = false): string {
             const tableReference = this.schema ? `${this.schema}.${tableName}` : tableName;
             if (includeAlias) {
                 const alias = this.aliasFn(tableName);
@@ -15,13 +14,6 @@ namespace QB {
                 }
             }
             return tableReference;
-        }
-
-        generateQuery(query?: any): string {
-            if (!query) {
-                return '';
-            }
-            return this.produceSql(0, query);
         }
 
         private formatColumn(tableName: string, columnName: string, useColNameWithTable: boolean = false): string {
@@ -34,8 +26,15 @@ namespace QB {
             return `${tableReference}.<span class="sql-column">${columnName}</span>`;
         }
 
+        generateQuery(query?: any): string {
+            if (!query) {
+                return '';
+            }
+            return this.produceSql(0, query);
+        }
+
         // TODO: add type to `query`
-        produceSql(level: number, query): string {
+        private produceSql(level: number, query): string {
             const indent = '    '.repeat(level);
             const nlIndent = '\n' + indent;
             const useColNameWithTable = !!query.leftJoin;
@@ -95,7 +94,7 @@ namespace QB {
         }
 
         private formatValueForWhereClause(value: string, table: string, column: string): string {
-            const columnType = this.__tables[table].columns[column];
+            const columnType = TableDefinitions.getColumnType(table, column);
             switch (columnType) {
                 case 'int':
                 case 'tinyint':

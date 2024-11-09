@@ -135,9 +135,10 @@ const __showWhereInButton = true;
 // -------------
 // End config
 // -------------
-const __version = '20241106';
+const __version = '20241109';
 
-const m_formatter = new QB.Formatter(__aliasFn, __tables, __schema);
+QB.TableDefinitions.init(__tables);
+const m_formatter = new QB.Formatter(__aliasFn, __schema);
 
 // State
 let __query = null;
