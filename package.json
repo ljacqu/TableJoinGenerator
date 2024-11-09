@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "tsc",
-    "dev": "concurrently \"tsc --watch\" \"http-server . -p 8080\""
+    "dev": "concurrently \"tsc --watch\" \"http-server project -p 8080\""
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
