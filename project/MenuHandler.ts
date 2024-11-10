@@ -3,8 +3,10 @@ namespace QB {
     export class MenuHandler {
 
         constructor(private tablesContainer: HTMLElement,
+                    private aggregateButton: AggregateButton,
                     private queryService: QueryService,
-                    private aggregateButton: AggregateButton) {
+                    private sqlTypeHandler: SqlTypeHandler,
+                    private selectColumnMenu: SelectColumnMenu) {
         }
 
         /** Lists all tables, on click shows the table's columns for filtering. */
@@ -33,7 +35,7 @@ namespace QB {
                     this.queryService.updateQuery(query => {
                         query.selectTable(table);
                         this.showRelatedColumns(table);
-                        this.renderSelectColumnButtonOrColumns(true);
+                        this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
                     });
                 });
 
@@ -90,7 +92,7 @@ namespace QB {
 
             const onSubmitFilter = () => {
                 try {
-                    this.validateColumnFilterElem(table, column, inputElem.value);
+                    this.sqlTypeHandler.validateColumnFilterElem(table, column, inputElem.value);
                 } catch (e: any) {
                     window.alert(e.message);
                     return;
@@ -104,7 +106,7 @@ namespace QB {
                     }
 
                     this.showRelatedColumns(forSubQuery ? query.getCurrentSelectedTable() : table);
-                    this.renderSelectColumnButtonOrColumns(!forSubQuery);
+                    this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(!forSubQuery));
                 });
             };
 
@@ -121,33 +123,6 @@ namespace QB {
                 onSubmitFilter();
             });
             inputElem.after(okBtn);
-        }
-
-        validateColumnFilterElem(table: string, column: string, value: string | null): void {
-            let columnType = QB.TableDefinitions.getColumnType(table, column);
-            if (columnType.startsWith('timestamp')) {
-                columnType = 'timestamp';
-            }
-
-            switch (columnType) {
-                case 'int':
-                case 'tinyint':
-                case 'decimal':
-                case 'number':
-                    if (value && value !== '!' && Number.isNaN(Number(value))) {
-                        throw new Error('Invalid number');
-                    }
-                    break;
-                case 'varchar':
-                case 'varchar2':
-                case 'timestamp':
-                case 'datetime':
-                case 'blob':
-                case 'clob':
-                    break;
-                default:
-                    console.log(`Unhandled validation for ${columnType}`);
-            }
         }
 
         // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
@@ -243,7 +218,7 @@ namespace QB {
             });
         }
 
-        showLeftJoinColumns(isFirstLeftJoin: boolean): void {
+        showLeftJoinColumns(): void {
             const tables = this.queryService.collectTopLevelTables();
             this.aggregateButton.show();
 
@@ -253,7 +228,6 @@ namespace QB {
             });
             references = references.filter(ref => !tables.has(ref.sourceTable) || !tables.has(ref.targetTable));
 
-            const showColumnsButton = isFirstLeftJoin || !!document.getElementById('select-col-btn');
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
             const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
             this.tablesContainer.append(ul);
@@ -275,80 +249,15 @@ namespace QB {
                 ul.appendChild(li);
             });
 
-            this.renderSelectColumnButtonOrColumns(showColumnsButton);
-        }
-
-        renderSelectColumnButtonOrColumns(showColumnsButton: boolean): void {
-            if (showColumnsButton) {
-                const columnsButton = DocElemHelper.newElemWithText('button', 'Select columns');
-                columnsButton.id = 'select-col-btn';
-                columnsButton.addEventListener('click', () => {
-                    this.tablesContainer.append(this.createListElementWithSelectableColumns());
-                    columnsButton.remove();
-                });
-                this.tablesContainer.append(columnsButton);
-            } else {
-                this.tablesContainer.append(this.createListElementWithSelectableColumns());
-            }
-        }
-
-        // When in 'left join' mode, offer to select only some columns
-        createListElementWithSelectableColumns() {
-            const tables = this.queryService.collectTopLevelTables();
-            const columns: any[] = [];
-            tables.forEach(table => {
-                for (const col in QB.TableDefinitions.getColumns(table)) {
-                    columns.push({
-                        table: table,
-                        column: col,
-                        active: this.queryService.hasColumnSelect(table, col)
-                    });
-                }
-            });
-
-            const title = DocElemHelper.newElemWithText('h3', 'Select columns');
-            const ul = document.createElement('ul');
-            columns.forEach(col => {
-                const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col.table + '.' + col.column;
-                li.dataset.table = col.table;
-                li.dataset.column = col.column;
-                if (col.active) {
-                    li.classList.add('active-column');
-                }
-                li.addEventListener('click', () => {
-                    if (li.classList.contains('active-column')) {
-                        li.classList.remove('active-column');
-                    } else {
-                        li.classList.add('active-column');
-                    }
-
-                    this.queryService.updateQuery(query => {
-                        query.clearColumnSelects();
-                        for (const column of ul.children) {
-                            if (column instanceof HTMLElement && column.classList.contains('active-column')) {
-                                const tableTable = column.dataset.table as string;
-                                const columnName = column.dataset.column as string;
-                                query.addColumnSelect(tableTable, columnName);
-                            }
-                        }
-                    });
-                });
-                ul.append(li);
-            });
-
-            const div = document.createElement('div');
-            div.append(title);
-            div.append(ul);
-            return div;
+            const columnElem = this.selectColumnMenu.generateColumnsButtonOrList();
+            this.tablesContainer.append(columnElem);
         }
 
         onClickLeftJoinColumn(sourceTable: string, sourceColumn: string,
                               targetTable: string, targetColumn: string): void {
             this.queryService.updateQuery(query => {
-                const isFirstLeftJoin = query.hasLeftJoin();
                 query.addLeftJoin(sourceTable, sourceColumn, targetTable, targetColumn);
-                this.showLeftJoinColumns(isFirstLeftJoin);
+                this.showLeftJoinColumns();
             });
         }
 
@@ -359,19 +268,18 @@ namespace QB {
 
                 this.aggregateButton.turnOff();
                 this.showRelatedColumns(targetTable);
-                this.renderSelectColumnButtonOrColumns(true); // query level is "reset", so hide columns again
+                // query level is "reset", so hide columns again
+                this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
             });
         }
 
-        // TODO: Revise function names (child/sub would be clearer)
-        onClickWhereIn(sourceColumn: string, targetTable: string, targetColumn: string): void {
+        onClickWhereIn(sourceColumn: string, subqueryTable: string, subqueryColumn: string): void {
             this.queryService.updateQuery(query => {
-                query.addSubQuery(sourceColumn, targetTable, targetColumn);
+                query.addSubQuery(sourceColumn, subqueryTable, subqueryColumn);
 
-                const hasSelectColumnsButton = !!document.getElementById('select-col-btn');
                 this.showRelatedColumns(query.getCurrentSelectedTable());
-                this.showFilterColumnsSubQuery(targetTable);
-                this.renderSelectColumnButtonOrColumns(hasSelectColumnsButton);
+                this.showFilterColumnsSubQuery(subqueryTable);
+                this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList());
             });
         }
     }

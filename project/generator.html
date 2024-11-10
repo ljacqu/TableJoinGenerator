@@ -138,11 +138,14 @@ const __showWhereInButton = true;
 const __version = '20241110';
 
 QB.TableDefinitions.init(__tables);
-const m_formatter = new QB.Formatter(__aliasFn, __schema);
+const m_sqlTypeHandler = new QB.SqlTypeHandler();
+const m_formatter = new QB.Formatter(m_sqlTypeHandler, __aliasFn, __schema);
 const m_query = new QB.QueryState();
-const m_aggregateButton = new QB.AggregateButton(document.getElementById('btn_agg'));
+const m_aggregateButton = new QB.AggregateButton(QB.DocElemHelper.getElementById('btn_agg'));
 const m_queryService = new QB.QueryService(m_query, m_formatter, __debug, __showWhereInButton);
-const m_menuHandler = new QB.MenuHandler(document.getElementById('tables'), m_queryService, m_aggregateButton);
+const m_selectColumnMenu = new QB.SelectColumnMenu(m_queryService);
+const m_menuHandler = new QB.MenuHandler(QB.DocElemHelper.getElementById('tables'),
+    m_aggregateButton, m_queryService, m_sqlTypeHandler, m_selectColumnMenu);
 
 function onClickAggregateButton() {
     m_queryService.updateQuery(query => {

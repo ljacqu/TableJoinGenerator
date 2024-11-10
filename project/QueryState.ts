@@ -111,10 +111,6 @@ namespace QB {
             return tables;
         }
 
-        hasLeftJoin(): boolean {
-            return !!this.query?.leftJoin?.length;
-        }
-
         hasWhereInClause(): boolean {
             return !!this.query?.subqueryFilterColumn;
         }

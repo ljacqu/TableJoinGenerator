@@ -2,7 +2,9 @@ namespace QB {
 
     export class Formatter {
 
-        constructor(private aliasFn: Function, private schema?: string) {
+        constructor(private sqlTypeHandler: SqlTypeHandler,
+                    private aliasFn: Function,
+                    private schema?: string) {
         }
 
         private formatTable(tableName: string, includeAlias: boolean = false): string {
@@ -84,7 +86,7 @@ namespace QB {
                 } else if (query.where.filter === '!') {
                     result += ' <span class="sql-keyword">IS NOT NULL</span>';
                 } else {
-                    result += ' = ' + this.formatValueForWhereClause(query.where.filter, query.table, query.where.column);
+                    result += ' = ' + this.sqlTypeHandler.formatValueForWhereClause(query.where.filter, query.table, query.where.column);
                 }
             }
             if (query.aggregate && !!query.select?.length) {
@@ -93,21 +95,6 @@ namespace QB {
                     .join('\n       , ');
             }
             return result;
-        }
-
-        private formatValueForWhereClause(value: string, table: string, column: string): string {
-            const columnType = TableDefinitions.getColumnType(table, column);
-            switch (columnType) {
-                case 'int':
-                case 'tinyint':
-                case 'decimal':
-                case 'number':
-                    return `<span class="sql-number">${value}</span>`;
-                default: // quote by default
-                    return `<span class="sql-text">'`
-                        + value.replaceAll('\'', '\'\'').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
-                        + `'</span>`;
-            }
         }
     }
 }
