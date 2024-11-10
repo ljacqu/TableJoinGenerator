@@ -26,7 +26,7 @@ namespace QB {
             return `${tableReference}.<span class="sql-column">${columnName}</span>`;
         }
 
-        generateQuery(query?: Query): string {
+        generateQuery(query: Query | null): string {
             if (!query) {
                 return '';
             }

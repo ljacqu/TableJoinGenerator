@@ -131,11 +131,8 @@ namespace QB {
         }
 
         getPreviousColumn(): Column | null { // TODO: Check if this makes sense
-            if (this.query && this.query.sub) {
-                const selects = this.query.sub.select;
-                return selects ? selects[0] : null;
-            }
-            return null;
+            const selects = this?.query?.sub?.select;
+            return selects ? selects[0] : null;
         }
 
         getPastColumns(): Set<Column> {
