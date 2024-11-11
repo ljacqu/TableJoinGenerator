@@ -1,4 +1,4 @@
-name: Compile TypeScript and Push to Dist
+name: Compile TypeScript and push to `dist`
 
 on:
   push:
@@ -13,6 +13,8 @@ jobs:
       # Step 1: Check out the code
       - name: Check out the repository
         uses: actions/checkout@v3
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 2: Set up Node.js environment
       - name: Set up Node.js
@@ -46,3 +48,5 @@ jobs:
           git add .
           git commit -m "Build and deploy TypeScript to dist branch" || echo "No changes to commit"
           git push origin dist-test --force
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
