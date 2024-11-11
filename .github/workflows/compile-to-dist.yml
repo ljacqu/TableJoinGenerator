@@ -30,23 +30,30 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
-# TODO: REplace dist-test with dist
-      # Step 5: Push to `dist` branch
-      - name: Push to `dist` branch
-        run: |
-          # Configure Git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Pusheroni
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: dist-test
+          commit_message: Automated change (build TS)
+          file_pattern: 'project/generator.html project/build.js'
 
-          git fetch origin dist-test
-          git checkout -B dist-test
-
-          # Copy compiled files to root of the dist branch
-          # rsync -a --delete dist-test/ ./
-
-          # Add, commit, and push changes to `dist` branch
-          git add .
-          git commit -m "Build and deploy TypeScript to dist branch" || echo "No changes to commit"
-          git push origin dist-test --force
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+## TODO: REplace dist-test with dist
+#      # Step 5: Push to `dist` branch
+#      - name: Push to `dist` branch
+#        run: |
+#          # Configure Git
+#          git config --global user.name "github-actions[bot]"
+#          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+#
+#          git fetch origin dist-test
+#          git checkout -B dist-test
+#
+#          # Copy compiled files to root of the dist branch
+#          # rsync -a --delete dist-test/ ./
+#
+#          # Add, commit, and push changes to `dist` branch
+#          git add .
+#          git commit -m "Build and deploy TypeScript to dist branch" || echo "No changes to commit"
+#          git push origin dist-test --force
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
