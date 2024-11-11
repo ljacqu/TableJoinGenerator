@@ -35,6 +35,9 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
+      - name: Copy
+        run: cp project/build.js build.js && cp project/generator.html generator.html
+
       - name: Git status
         run: git status
 
@@ -44,7 +47,7 @@ jobs:
         with:
           branch: dist-test
           commit_message: Automated change (build TS)
-          # file_pattern: 'project/generator.html project/build.js'
+          file_pattern: 'generator.html build.js'
 
 ## TODO: REplace dist-test with dist
 #      # Step 5: Push to `dist` branch
