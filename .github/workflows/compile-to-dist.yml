@@ -9,6 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
     steps:
       # Step 1: Check out the code
       - name: Check out the repository
@@ -29,6 +34,9 @@ jobs:
       # Step 4: Compile TypeScript to JavaScript
       - name: Compile TypeScript
         run: npm run build
+
+      - name: Git status
+        run: git status
 
       # https://github.com/stefanzweifel/git-auto-commit-action
       - name: Push changes
