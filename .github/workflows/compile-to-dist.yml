@@ -30,7 +30,8 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
-      - name: Pusheroni
+      # https://github.com/stefanzweifel/git-auto-commit-action
+      - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: dist-test
