@@ -51,7 +51,8 @@ namespace QB {
                 subqueryFilterColumn: parentColumn,
                 sub: this.query
             };
-            // TODO: past columns?
+
+            this.pastColumns.add({table: this.query.sub!.table, column: column});
         }
 
         addSubQuery(column: string, childTable: string, childColumn: string): void {
@@ -64,7 +65,7 @@ namespace QB {
                 select: [{column: childColumn, table: childTable}],
                 table: childTable
             };
-            // TODO: past columns?
+            this.pastColumns.add({table: childTable, column: childColumn});
         }
 
         addLeftJoin(sourceTable: string, sourceColumn: string, targetTable: string, targetColumn: string): void {
@@ -124,11 +125,6 @@ namespace QB {
 
         getQuery(): Query | null {
             return this.query || null;
-        }
-
-        getPreviousColumn(): Column | null { // TODO: Check if this makes sense
-            const selects = this?.query?.sub?.select;
-            return selects ? selects[0] : null;
         }
 
         getPastColumns(): Set<Column> {

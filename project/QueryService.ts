@@ -13,10 +13,6 @@ namespace QB {
             this.updateQueryOnPage();
         }
 
-        getPreviousColumn(): Column | null {
-            return this.query.getPreviousColumn();
-        }
-
         collectTopLevelTables(): Set<string> {
             return this.query.collectTopLevelTables();
         }

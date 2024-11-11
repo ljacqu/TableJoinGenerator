@@ -128,10 +128,7 @@ namespace QB {
         // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
         // columns the same or to have custom behavior, e.g. to check for past (table, column) combinations and not just
         // past tables as is currently implemented.
-        getClassForRelatedColumn(table: string, column: string, prevCol: Column | null): string {
-            if (prevCol && prevCol.table === table && prevCol.column === column) {
-                return 'rc-prev';
-            }
+        getClassForRelatedColumn(table: string, column: string): string {
             for (const pastColumn of this.queryService.getPastColumns()) {
                 if (pastColumn.table === table) {
                     return 'rc-past';
@@ -177,8 +174,6 @@ namespace QB {
             const references = this.collectRelatedColumns(curTable);
             this.aggregateButton.show();
 
-            const prevCol = this.queryService.getPreviousColumn();
-
             this.tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
             const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
             this.tablesContainer.append(ul);
@@ -203,7 +198,7 @@ namespace QB {
                 li.append(btnLeftJoin);
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn, prevCol);
+                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
                 spanWithTableColumn.innerHTML = ` <span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
                 li.append(spanWithTableColumn);
 
@@ -235,7 +230,7 @@ namespace QB {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn, null);
+                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
                 spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} `;
                 li.append(spanWithTableColumn);
 
@@ -261,18 +256,29 @@ namespace QB {
             });
         }
 
-        /** Changes the current query to a subquery filtering the given (targetTable, targetColumn). */
-        onClickReferenceColumn(sourceColumn: string, targetTable: string, targetColumn: string): void {
+        /**
+         * Click handler of a "related column" that is shown after an initial table has been selected.
+         *
+         * Changes the current query to a subquery filtering the given (parentTable, parentColumn), so that the new
+         * query is: <code>SELECT * FROM parentTable WHERE parentColumn IN (SELECT sourceColumn FROM {query})</code>.
+         */
+        onClickReferenceColumn(sourceColumn: string, parentTable: string, parentColumn: string): void {
             this.queryService.updateQuery(query => {
-                query.addSuperQuery(sourceColumn, targetTable, targetColumn);
+                query.addSuperQuery(sourceColumn, parentTable, parentColumn);
 
                 this.aggregateButton.turnOff();
-                this.showRelatedColumns(targetTable);
+                this.showRelatedColumns(parentTable);
                 // query level is "reset", so hide columns again
                 this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
             });
         }
 
+        /**
+         * Click handler for the "where query in ..." button (⊆).
+         *
+         * Adds a subquery to the current query such that the new query becomes:
+         * <code>{query} WHERE sourceColumn IN (SELECT subqueryColumn FROM subqueryTable)</code>.
+         */
         onClickWhereIn(sourceColumn: string, subqueryTable: string, subqueryColumn: string): void {
             this.queryService.updateQuery(query => {
                 query.addSubQuery(sourceColumn, subqueryTable, subqueryColumn);
