@@ -15,29 +15,30 @@ jobs:
       contents: write
 
     steps:
-      # Step 1: Check out the code
       - name: Check out the repository
         uses: actions/checkout@v3
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 2: Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # TODO : Step 3: Install dependencies -- needed?
+      # npm install not needed because of the project's simple setup; uncomment if this is not the case in the future
       # - name: Install dependencies
       #  run: npm install
 
-      # Step 4: Compile TypeScript to JavaScript
       - name: Compile TypeScript
         run: npm run build
 
-      - name: Copy
-        run: cp project/build.js build.js && cp project/generator.html generator.html
+      - name: Copy files to root
+        run: | 
+          cp project/build.js build.js
+          cp project/generator.html generator.html
+          cp project/tables.js tables.js
 
+      # TODO: remove
       - name: Git status
         run: git status
 
@@ -47,25 +48,4 @@ jobs:
         with:
           branch: dist-test
           commit_message: Automated change (build TS)
-          file_pattern: 'generator.html build.js'
-
-## TODO: REplace dist-test with dist
-#      # Step 5: Push to `dist` branch
-#      - name: Push to `dist` branch
-#        run: |
-#          # Configure Git
-#          git config --global user.name "github-actions[bot]"
-#          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-#
-#          git fetch origin dist-test
-#          git checkout -B dist-test
-#
-#          # Copy compiled files to root of the dist branch
-#          # rsync -a --delete dist-test/ ./
-#
-#          # Add, commit, and push changes to `dist` branch
-#          git add .
-#          git commit -m "Build and deploy TypeScript to dist branch" || echo "No changes to commit"
-#          git push origin dist-test --force
-#        env:
-#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          file_pattern: 'build.js generator.html tables.js'
