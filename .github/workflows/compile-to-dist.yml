@@ -1,0 +1,67 @@
+name: Compile TypeScript and push to `dist`
+
+on:
+  push:
+    branches:
+      - dist
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          ref: dist
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # npm install not needed because of the project's simple setup; uncomment if this is not the case in the future
+      # - name: Install dependencies
+      #  run: npm install
+
+      - name: Compile TypeScript to build.js
+        run: npm run build
+
+      - name: Copy files to build folder
+        run: | 
+          cp project/build.js       build/build.js
+          cp project/generator.html build/generator.html
+          cp project/tables.js      build/tables.js
+
+      # https://github.com/devatherock/minify-js
+      - name: Minify JS/HTML
+        uses: docker://devatherock/minify-js:3.1.0
+        with:
+          directory: 'build'
+          add_suffix: false
+          exclusions: |-
+            .*tables\.js
+            .*\.html
+
+      - name: Inline build.js into generator.html
+        run: |
+          sed -i '/<script src="build\.js"><\/script>/{
+            i <script>
+            r build/build.js
+            a </script>
+            d
+          }' build/generator.html
+
+      # https://github.com/stefanzweifel/git-auto-commit-action
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Update build folder (automated change)
+          file_pattern: 'build/generator.html build/tables.js'
