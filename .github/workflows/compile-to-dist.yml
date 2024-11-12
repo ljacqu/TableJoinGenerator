@@ -53,7 +53,7 @@ jobs:
       - name: Inline build.js into generator.html
         run: |
           sed -i '/<script src="build\.js"><\/script>/{
-            s/<script src="build\.js"><\/script>/<script>/
+            i <script>
             r build/build.js
             a </script>
             d
