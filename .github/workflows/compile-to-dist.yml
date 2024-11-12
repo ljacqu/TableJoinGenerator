@@ -63,5 +63,5 @@ jobs:
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: Automated change (build TS)
+          commit_message: Update build folder (automated change)
           file_pattern: 'build/generator.html build/tables.js'
