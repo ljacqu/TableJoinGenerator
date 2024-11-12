@@ -36,13 +36,9 @@ jobs:
 
       - name: Copy files to root
         run: | 
-          cp project/build.js build.js
-          cp project/generator.html generator.html
-          cp project/tables.js tables.js
-
-      # TODO: remove
-      - name: Git status
-        run: git status
+          cp project/build.js       build/build.js
+          cp project/generator.html build/generator.html
+          cp project/tables.js      build/tables.js
 
       # https://github.com/stefanzweifel/git-auto-commit-action
       - name: Push changes
@@ -50,4 +46,4 @@ jobs:
         with:
           # branch: dist-test
           commit_message: Automated change (build TS)
-          file_pattern: 'build.js generator.html tables.js'
+          file_pattern: 'build/*'
