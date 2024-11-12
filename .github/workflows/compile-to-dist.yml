@@ -3,7 +3,7 @@ name: Compile TypeScript and push to `dist`
 on:
   push:
     branches:
-      - dist-build-poc  # TODO fix me
+      - dist
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
 #        env:
 #          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          ref: dist-build-poc  # TODO fix me
+          ref: dist
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
