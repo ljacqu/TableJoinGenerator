@@ -40,10 +40,14 @@ jobs:
           cp project/generator.html build/generator.html
           cp project/tables.js      build/tables.js
 
+      # https://github.com/devatherock/minify-js
       - name: Minify JS/HTML
         uses: docker://devatherock/minify-js:3.1.0
         with:
           directory: 'build'
+          add_suffix: false
+          exclusions: |-
+            .*tables\.js
 
       # https://github.com/stefanzweifel/git-auto-commit-action
       - name: Push changes
