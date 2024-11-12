@@ -31,10 +31,10 @@ jobs:
       # - name: Install dependencies
       #  run: npm install
 
-      - name: Compile TypeScript
+      - name: Compile TypeScript to build.js
         run: npm run build
 
-      - name: Copy files to root
+      - name: Copy files to build folder
         run: | 
           cp project/build.js       build/build.js
           cp project/generator.html build/generator.html
@@ -48,6 +48,16 @@ jobs:
           add_suffix: false
           exclusions: |-
             .*tables\.js
+            .*\.html
+
+      - name: Inline build.js into generator.html
+        run: |
+          sed -i '/<script src="build\.js"><\/script>/{
+            s/<script src="build\.js"><\/script>/<script>/
+            r build/build.js
+            a </script>
+            d
+          }' build/generator.html
 
       # https://github.com/stefanzweifel/git-auto-commit-action
       - name: Push changes
@@ -55,4 +65,4 @@ jobs:
         with:
           # branch: dist-test
           commit_message: Automated change (build TS)
-          file_pattern: 'build/*'
+          file_pattern: 'build/generator.html build/tables.js'
