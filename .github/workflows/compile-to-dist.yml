@@ -36,20 +36,9 @@ jobs:
 
       - name: Copy files to root
         run: | 
-          cp project/build.js build2.js
-          cp project/generator.html generator2.html
-          cp project/tables.js tables2.js
-
-      - name: Switch to dist-test branch
-        run: |
-          git fetch origin dist-test
-          git checkout -B dist-test
-
-      - name: Move files back to project folder
-        run: |
-          mv build2.js build.js
-          mv generator2.html generator.html
-          mv tables2.js tables.js
+          cp project/build.js build.js
+          cp project/generator.html generator.html
+          cp project/tables.js tables.js
 
       # TODO: remove
       - name: Git status
@@ -59,6 +48,6 @@ jobs:
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          branch: dist-test
+          # branch: dist-test
           commit_message: Automated change (build TS)
           file_pattern: 'build.js generator.html tables.js'
