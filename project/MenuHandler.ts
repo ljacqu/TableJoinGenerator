@@ -141,29 +141,18 @@ namespace QB {
             const references: QueryLeftJoin[] = [];
 
             // Add references from the current table
-            Object.entries(QB.TableDefinitions.getReferences(curTable)).forEach(([sourceColumn, reference]) => {
-                references.push({
-                    sourceTable: curTable,
-                    sourceColumn: sourceColumn,
-                    targetTable: reference.table,
-                    targetColumn: reference.column
-                });
+            QB.TableDefinitions.collectAllReferences(curTable).forEach(reference => {
+                references.push(reference);
             });
 
             // Check other tables for references targeting the current table
-            Object.entries(QB.TableDefinitions.getAllTables()).forEach(([table, definition]) => {
-                if (table !== curTable) {
-                    Object.entries(definition.references).forEach(([targetColumn, reference]) => {
-                        if (reference.table === curTable) {
-                            references.push({
-                                sourceTable: curTable,
-                                sourceColumn: reference.column,
-                                targetTable: table,
-                                targetColumn: targetColumn
-                            });
-                        }
-                    });
-                }
+            QB.TableDefinitions.collectReferencesToTable(curTable).forEach(reference => {
+                references.push({
+                    sourceTable: reference.targetTable,
+                    sourceColumn: reference.targetColumn,
+                    targetTable: reference.sourceTable,
+                    targetColumn: reference.sourceColumn
+                });
             });
 
             return references;

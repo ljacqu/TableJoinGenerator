@@ -35,7 +35,7 @@ jobs:
         run: npm run build
 
       - name: Copy files to build folder
-        run: | 
+        run: |
           cp project/build.js       build/build.js
           cp project/generator.html build/generator.html
           cp project/tables.js      build/tables.js
@@ -49,6 +49,11 @@ jobs:
           exclusions: |-
             .*tables\.js
             .*\.html
+
+      - name: Set version to current date
+        run: |
+          CURRENT_DATE=$(date +'%Y%m%d')
+          sed -i "s/^const __version = '.*';/const __version = '$CURRENT_DATE';/" build/generator.html
 
       - name: Inline build.js into generator.html
         run: |

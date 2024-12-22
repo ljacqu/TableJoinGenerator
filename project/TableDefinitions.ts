@@ -19,8 +19,40 @@ namespace QB {
             return this.tables[table].columns;
         }
 
-        static getReferences(table: string): TableReference {
-            return this.tables[table].references;
+        static collectAllReferences(table: string): TableReference[] {
+            const result: TableReference[] = [];
+            Object.entries(this.tables[table].references).forEach(([sourceColumn, references]) => {
+                references.forEach(reference => {
+                    result.push({
+                        sourceTable: table,
+                        sourceColumn: sourceColumn,
+                        targetTable: reference.table,
+                        targetColumn: reference.column
+                    })
+                });
+            });
+            return result;
+        }
+
+        static collectReferencesToTable(curTable: string): TableReference[] {
+            const result: TableReference[] = [];
+            for (const table in this.tables) {
+                if (table !== curTable) {
+                    Object.entries(this.tables[table].references).forEach(([sourceColumn, references]) => {
+                        references.forEach(reference => {
+                            if (reference.table === curTable) {
+                                result.push({
+                                    sourceTable: table,
+                                    sourceColumn: sourceColumn,
+                                    targetTable: curTable,
+                                    targetColumn: reference.column,
+                                });
+                            }
+                        });
+                    });
+                }
+            }
+            return result;
         }
 
         static getAllTables(): TableDefs {
@@ -35,15 +67,22 @@ namespace QB {
     export type TableDef = {
         alias?: string;
         columns: ColumnDef;
-        references: TableReference;
+        references: TableReferencesHolder;
         highlights: { };
     };
 
-    export type TableReference = {
+    export type TableReferencesHolder = {
         [columnName: string]: {
             table: string;
             column: string;
-        }
+        }[]
+    };
+
+    export type TableReference = {
+        sourceTable:  string;
+        sourceColumn: string;
+        targetTable:  string;
+        targetColumn: string;
     };
 
     export type ColumnDef = {
