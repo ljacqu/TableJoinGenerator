@@ -123,6 +123,13 @@ namespace QB {
             return this.query.select.some(select => select.table === table && select.column === column);
         }
 
+        hasAnyColumnSelect(): boolean {
+            if (this.query?.select) {
+                return this.query.select.length > 0;
+            }
+            return false;
+        }
+
         getQuery(): Query | null {
             return this.query || null;
         }

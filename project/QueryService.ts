@@ -29,6 +29,10 @@ namespace QB {
             return this.query.hasColumnSelect(table, column);
         }
 
+        hasAnyColumnSelect(): boolean {
+            return this.query.hasAnyColumnSelect();
+        }
+
         private updateQueryOnPage() {
             DocElemHelper.getElementById('query').innerHTML = this.formatter.generateQuery(this.query.getQuery());
             if (this.configDebugEnabled) {
