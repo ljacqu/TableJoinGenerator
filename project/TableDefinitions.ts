@@ -27,7 +27,8 @@ namespace QB {
                         sourceTable: table,
                         sourceColumn: sourceColumn,
                         targetTable: reference.table,
-                        targetColumn: reference.column
+                        targetColumn: reference.column,
+                        joinVariants: reference.joinVariants
                     })
                 });
             });
@@ -46,6 +47,7 @@ namespace QB {
                                     sourceColumn: sourceColumn,
                                     targetTable: curTable,
                                     targetColumn: reference.column,
+                                    joinVariants: reference.joinVariants
                                 });
                             }
                         });
@@ -75,7 +77,13 @@ namespace QB {
         [columnName: string]: {
             table: string;
             column: string;
+            joinVariants?: TableReferenceJoinVariant[];
         }[]
+    };
+
+    export type TableReferenceJoinVariant = {
+        name: string;
+        filter: string;
     };
 
     export type TableReference = {
@@ -83,6 +91,7 @@ namespace QB {
         sourceColumn: string;
         targetTable:  string;
         targetColumn: string;
+        joinVariants?: TableReferenceJoinVariant[];
     };
 
     export type ColumnDef = {

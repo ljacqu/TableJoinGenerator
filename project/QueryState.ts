@@ -68,12 +68,13 @@ namespace QB {
             this.pastColumns.add({table: childTable, column: childColumn});
         }
 
-        addLeftJoin(sourceTable: string, sourceColumn: string, targetTable: string, targetColumn: string): void {
+        addLeftJoin(sourceTable: string, sourceColumn: string, targetTable: string, targetColumn: string,
+                    filterAddition?: string): void {
             if (!this.query!.leftJoin) {
                 this.query!.leftJoin = [];
             }
             this.query!.leftJoin.push({
-                sourceTable, sourceColumn, targetTable, targetColumn
+                sourceTable, sourceColumn, targetTable, targetColumn, filterAddition
             });
         }
 
@@ -166,5 +167,6 @@ namespace QB {
         sourceColumn: string;
         targetTable:  string;
         targetColumn: string;
+        filterAddition?: string;
     };
 }

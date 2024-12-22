@@ -130,6 +130,39 @@ const __tables = {
         },
         "highlights": {}
     },
+    "nq_secret": {
+        "alias": "sec",
+        "columns": {
+            "id": "int",
+            "type": "varchar",
+            "value": "varchar",
+            "owner_id": "int"
+        },
+        "references": {
+            "owner_id": [
+                {
+                    "table": "nq_owner",
+                    "column": "id",
+                    "joinVariants": [
+                        {
+                            "name": "demo",
+                            "filter": "type = 'DEMO'"
+                        },
+                        {
+                            "name": "real",
+                            "filter": "type = 'REAL'"
+                        }
+                    ]
+                },
+                {
+                    "table": "nq_draw",
+                    "column": "owner_id"
+                }
+            ]
+        },
+        "highlights": {
+        }
+    },
     "nq_settings": {
         "alias": "stg",
         "columns": {

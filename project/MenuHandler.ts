@@ -137,8 +137,8 @@ namespace QB {
             return 'rc-new';
         }
 
-        collectRelatedColumns(curTable: string): QueryLeftJoin[] {
-            const references: QueryLeftJoin[] = [];
+        collectRelatedColumns(curTable: string): TableReference[] {
+            const references: TableReference[] = [];
 
             // Add references from the current table
             QB.TableDefinitions.collectAllReferences(curTable).forEach(reference => {
@@ -151,7 +151,8 @@ namespace QB {
                     sourceTable: reference.targetTable,
                     sourceColumn: reference.targetColumn,
                     targetTable: reference.sourceTable,
-                    targetColumn: reference.sourceColumn
+                    targetColumn: reference.sourceColumn,
+                    joinVariants: reference.joinVariants
                 });
             });
 
@@ -173,7 +174,13 @@ namespace QB {
                 const btnLeftJoin = DocElemHelper.newElemWithText('button', '⟕');
                 btnLeftJoin.title = 'Left join';
                 btnLeftJoin.addEventListener('click', () => {
-                    this.onClickLeftJoinColumn(curTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+                    const reference = {
+                        sourceTable: curTable,
+                        sourceColumn: ref.sourceColumn,
+                        targetTable: ref.targetTable,
+                        targetColumn: ref.targetColumn
+                    };
+                    this.onClickLeftJoinColumn(reference);
                 });
                 li.append(btnLeftJoin);
 
@@ -206,7 +213,7 @@ namespace QB {
             const tables = this.queryService.collectTopLevelTables();
             this.aggregateButton.show();
 
-            let references: QueryLeftJoin[] = [];
+            let references: TableReference[] = [];
             tables.forEach(activeTable => {
                 references.push(...this.collectRelatedColumns(activeTable));
             });
@@ -224,11 +231,11 @@ namespace QB {
                 li.append(spanWithTableColumn);
 
                 spanWithTableColumn.addEventListener('click', () => {
-                    this.onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+                    this.onClickLeftJoinColumn(ref); // TODO: Pass in join variant
                 });
                 spanWithTableColumn.addEventListener('contextmenu', e => {
                     e.preventDefault();
-                    this.onClickLeftJoinColumn(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+                    this.onClickLeftJoinColumn(ref); // TODO: Pass in join variant
                 });
                 ul.appendChild(li);
             });
@@ -237,10 +244,9 @@ namespace QB {
             this.tablesContainer.append(columnElem);
         }
 
-        onClickLeftJoinColumn(sourceTable: string, sourceColumn: string,
-                              targetTable: string, targetColumn: string): void {
+        onClickLeftJoinColumn(ref: TableReference, filterAddition?: string) {
             this.queryService.updateQuery(query => {
-                query.addLeftJoin(sourceTable, sourceColumn, targetTable, targetColumn);
+                query.addLeftJoin(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn, filterAddition);
                 this.showLeftJoinColumns();
             });
         }
