@@ -170,6 +170,13 @@ namespace QB {
             references.forEach(ref => {
                 const li = document.createElement('li');
 
+                const btnLeftJoin = DocElemHelper.newElemWithText('button', '⟕');
+                btnLeftJoin.title = 'Left join';
+                btnLeftJoin.addEventListener('click', () => {
+                    this.onClickLeftJoinColumn(curTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
+                });
+                li.append(btnLeftJoin);
+
                 if (this.queryService.showWhereQueryInButton()) {
                     const btnWhereIn = DocElemHelper.newElemWithText('button', '⊆');
                     btnWhereIn.title = 'keep current table, filter by this table';
@@ -178,13 +185,6 @@ namespace QB {
                     });
                     li.append(btnWhereIn);
                 }
-
-                const btnLeftJoin = DocElemHelper.newElemWithText('button', '⟕');
-                btnLeftJoin.title = 'Left join';
-                btnLeftJoin.addEventListener('click', () => {
-                    this.onClickLeftJoinColumn(curTable, ref.sourceColumn, ref.targetTable, ref.targetColumn);
-                });
-                li.append(btnLeftJoin);
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
                 const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
