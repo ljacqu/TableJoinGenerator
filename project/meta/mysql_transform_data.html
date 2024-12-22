@@ -85,10 +85,10 @@ function populateReferences(tableData) {
                 + ' provided for a column that is unknown');
         }
 
-        tableEntry.references[ fk['COLUMN_NAME'] ] = {
+        tableEntry.references[ fk['COLUMN_NAME'] ] = [{
             table: fk['REFERENCED_TABLE_NAME'],
             column: fk['REFERENCED_COLUMN_NAME']
-        };
+        }];
     });
 }
 

@@ -9,14 +9,14 @@ const __tables = {
             "solved": "datetime"
         },
         "references": {
-            "owner_id": {
+            "owner_id": [{
                 "table": "nq_owner",
                 "column": "id"
-            },
-            "question_id": {
+            }],
+            "question_id": [{
                 "table": "nq_question",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },
@@ -31,10 +31,10 @@ const __tables = {
             "score": "decimal"
         },
         "references": {
-            "draw_id": {
+            "draw_id": [{
                 "table": "nq_draw",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },
@@ -49,10 +49,10 @@ const __tables = {
             "last_question_repeat": "datetime"
         },
         "references": {
-            "draw_id": {
+            "draw_id": [{
                 "table": "nq_draw",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },
@@ -68,14 +68,14 @@ const __tables = {
             "stats_id": "int"
         },
         "references": {
-            "settings_id": {
+            "settings_id": [{
                 "table": "nq_settings",
                 "column": "id"
-            },
-            "stats_id": {
+            }],
+            "stats_id": [{
                 "table": "nq_owner_stats",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },
@@ -94,10 +94,10 @@ const __tables = {
             "tw_refresh_token": "varchar"
         },
         "references": {
-            "owner_id": {
+            "owner_id": [{
                 "table": "nq_owner",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },
@@ -123,10 +123,10 @@ const __tables = {
             "category": "varchar"
         },
         "references": {
-            "owner_id": {
+            "owner_id": [{
                 "table": "nq_owner",
                 "column": "id"
-            }
+            }]
         },
         "highlights": {}
     },

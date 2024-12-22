@@ -102,10 +102,10 @@ T_GHI,DEF_ID,T_DEF,ID
 
             const childTable = fkEntries[2].trim();
             const childColumn = fkEntries[3].trim();
-            tableEntry.references[ parentColumn ] = {
+            tableEntry.references[ parentColumn ] = [{
                 table: childTable,
                 column: childColumn
-            };
+            }];
         });
     }
 
