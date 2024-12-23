@@ -235,7 +235,7 @@ namespace QB {
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
                 const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
-                const nameAddition = !!ref.joinVariant ? ` (${ref.joinVariant.name})` : '';
+                const nameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
                 spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${nameAddition}`;
                 li.append(spanWithTableColumn);
 
@@ -278,7 +278,7 @@ namespace QB {
             // don't offer it as additional join. E.g. for three tables A, B, C, if we have an active left join for
             // A-C and A-B, then we won't offer B-C even though it may exist.
             const tablesOfGenericJoins = new Set<string>();
-            currentLeftJoins.filter(lj => !lj.joinVariant)
+            currentLeftJoins.filter(lj => !lj.joinVariantName)
                 .forEach(lj => {
                     tablesOfGenericJoins.add(lj.sourceTable);
                     tablesOfGenericJoins.add(lj.targetTable);
@@ -292,14 +292,16 @@ namespace QB {
                 const variantAlreadyUsed = currentLeftJoins.some(
                     lj => lj.sourceTable === reference.sourceTable
                     && lj.targetTable === reference.targetTable
-                    && lj.joinVariant?.name === joinVariant.name);
+                    && lj.joinVariantName === joinVariant.name);
                 if (!variantAlreadyUsed) {
                     possibleJoins.push({
                         sourceTable: reference.sourceTable,
                         sourceColumn: reference.sourceColumn,
                         targetTable: reference.targetTable,
                         targetColumn: reference.targetColumn,
-                        joinVariant: joinVariant
+                        targetTableAlias: joinVariant.alias,
+                        joinVariantName: joinVariant.name,
+                        joinVariantFilter: joinVariant.filter
                     });
                 }
             });

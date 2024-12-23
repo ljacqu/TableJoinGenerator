@@ -164,6 +164,9 @@ namespace QB {
         sourceColumn: string;
         targetTable:  string;
         targetColumn: string;
-        joinVariant?: TableReferenceJoinVariant;
+        joinVariantFilter?: string;
+        joinVariantName?: string;
+        sourceTableAlias?: string;
+        targetTableAlias?: string;
     };
 }

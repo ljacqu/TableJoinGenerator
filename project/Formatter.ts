@@ -62,12 +62,11 @@ namespace QB {
 
             if (query.leftJoin) {
                 query.leftJoin.forEach(lj => {
-                    const targetTableAlias = lj.joinVariant?.alias;
-                    result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true, targetTableAlias)
-                        + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true, targetTableAlias)
-                        + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true);
-                    if (lj.joinVariant?.filter) {
-                        result += nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariant.filter;
+                    result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true, lj.targetTableAlias)
+                        + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true, lj.targetTableAlias)
+                        + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true, lj.sourceTableAlias);
+                    if (lj.joinVariantFilter) {
+                        result += nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariantFilter;
                     }
                 });
             }
