@@ -45,7 +45,7 @@ namespace QB {
         }
 
         /** Lists all columns of the given table to add a filter. Used when an initial table is selected. */
-        showColumnsToFilterInitialTable(table: string, btnElem: HTMLElement): void {
+        private showColumnsToFilterInitialTable(table: string, btnElem: HTMLElement): void {
             for (const elem of document.querySelectorAll('ul.columns')) {
                 elem.remove();
             }
@@ -61,7 +61,7 @@ namespace QB {
             btnElem.after(ul);
         }
 
-        showFilterColumnsSubQuery(table: string): void {
+        private showFilterColumnsSubQuery(table: string): void {
             for (const elem of document.querySelectorAll('ul.columns')) {
                 elem.remove();
             }
@@ -82,7 +82,7 @@ namespace QB {
             this.tablesContainer.append(ul);
         }
 
-        createColumnFilterElem(table: string, column: string, colElem: HTMLElement, forSubQuery: boolean): void {
+        private createColumnFilterElem(table: string, column: string, colElem: HTMLElement, forSubQuery: boolean): void {
             for (const elem of document.querySelectorAll('.where_input')) {
                 elem.remove();
             }
@@ -128,7 +128,7 @@ namespace QB {
         // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
         // columns the same or to have custom behavior, e.g. to check for past (table, column) combinations and not just
         // past tables as is currently implemented.
-        getClassForRelatedColumn(table: string, column: string): string {
+        private getClassForRelatedColumn(table: string, column: string): string {
             for (const pastColumn of this.queryService.getPastColumns()) {
                 if (pastColumn.table === table) {
                     return 'rc-past';
@@ -137,12 +137,15 @@ namespace QB {
             return 'rc-new';
         }
 
-        collectRelatedColumns(curTable: string): TableReference[] {
-            const references: TableReference[] = [];
+        private collectRelatedColumns(curTable: string): MappedTableReference[] {
+            const references: MappedTableReference[] = [];
 
             // Add references from the current table
             QB.TableDefinitions.collectAllReferences(curTable).forEach(reference => {
-                references.push(reference);
+                references.push({
+                    ...reference,
+                    reversed: false
+                });
             });
 
             // Check other tables for references targeting the current table
@@ -152,7 +155,8 @@ namespace QB {
                     sourceColumn: reference.targetColumn,
                     targetTable: reference.sourceTable,
                     targetColumn: reference.sourceColumn,
-                    joinVariants: reference.joinVariants
+                    joinVariants: reference.joinVariants,
+                    reversed: true
                 });
             });
 
@@ -160,7 +164,7 @@ namespace QB {
         }
 
         /** Shows all (table, column) pairs that can be referenced from the current table. */
-        showRelatedColumns(curTable: string): void {
+        private showRelatedColumns(curTable: string): void {
             const references = this.collectRelatedColumns(curTable);
             this.aggregateButton.show();
 
@@ -209,33 +213,38 @@ namespace QB {
             });
         }
 
-        showLeftJoinColumns(): void {
+        private showLeftJoinColumns(): void {
             const tables = this.queryService.collectTopLevelTables();
             this.aggregateButton.show();
 
-            let references: TableReference[] = [];
+            const references: MappedTableReference[] = [];
             tables.forEach(activeTable => {
                 references.push(...this.collectRelatedColumns(activeTable));
             });
-            references = references.filter(ref => !tables.has(ref.sourceTable) || !tables.has(ref.targetTable));
+
+            const possibleJoins: QueryLeftJoin[] = [];
+            for (const reference of references) {
+                possibleJoins.push(...this.mapTableReference(reference, tables));
+            }
 
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
             const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
             this.tablesContainer.append(ul);
-            references.forEach(ref => {
+            possibleJoins.forEach(ref => {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
                 const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
-                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} `;
+                const nameAddition = !!ref.joinVariant ? ` (${ref.joinVariant.name})` : '';
+                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${nameAddition}`;
                 li.append(spanWithTableColumn);
 
                 spanWithTableColumn.addEventListener('click', () => {
-                    this.onClickLeftJoinColumn(ref); // TODO: Pass in join variant
+                    this.onClickLeftJoinColumn(ref);
                 });
                 spanWithTableColumn.addEventListener('contextmenu', e => {
                     e.preventDefault();
-                    this.onClickLeftJoinColumn(ref); // TODO: Pass in join variant
+                    this.onClickLeftJoinColumn(ref);
                 });
                 ul.appendChild(li);
             });
@@ -244,9 +253,55 @@ namespace QB {
             this.tablesContainer.append(columnElem);
         }
 
-        onClickLeftJoinColumn(ref: TableReference, filterAddition?: string) {
+        private mapTableReference(reference: MappedTableReference,
+                                  tables: Set<string>): QueryLeftJoin[] {
+            // Allow to apply a join variant only if the table with the variant is joined in, i.e. it was reversed
+            const canApplyJoinVariants =
+                MenuHandler.isNotNullAndNotEmpty(reference.joinVariants) && reference.reversed;
+            if (!canApplyJoinVariants) {
+                if (tables.has(reference.sourceTable) && tables.has(reference.targetTable)) {
+                    return [];
+                }
+                return [
+                    {
+                        sourceTable: reference.sourceTable,
+                        sourceColumn: reference.sourceColumn,
+                        targetTable: reference.targetTable,
+                        targetColumn: reference.targetColumn
+                    }
+                ];
+            }
+
+            // Can apply join variants
+            const currentLeftJoins = this.queryService.getLeftJoins();
+            const possibleJoins: QueryLeftJoin[] = [];
+            // TODO: if we have a generic 'join', need to filter it out as soon as there is a join variant
+            reference.joinVariants!.forEach(joinVariant => {
+                const variantAlreadyUsed = currentLeftJoins.some(
+                    lj => lj.sourceTable === reference.sourceTable
+                    && lj.targetTable === reference.targetTable
+                    && lj.joinVariant?.name === joinVariant.name);
+                if (!variantAlreadyUsed) {
+                    possibleJoins.push({
+                        sourceTable: reference.sourceTable,
+                        sourceColumn: reference.sourceColumn,
+                        targetTable: reference.targetTable,
+                        targetColumn: reference.targetColumn,
+                        joinVariant: joinVariant
+                    });
+                }
+            });
+
+            return possibleJoins;
+        }
+
+        private static isNotNullAndNotEmpty(arr?: any[]): boolean {
+            return !!arr && arr.length > 0;
+        }
+
+        private onClickLeftJoinColumn(tableJoin: QueryLeftJoin) {
             this.queryService.updateQuery(query => {
-                query.addLeftJoin(ref.sourceTable, ref.sourceColumn, ref.targetTable, ref.targetColumn, filterAddition);
+                query.addLeftJoin(tableJoin);
                 this.showLeftJoinColumns();
             });
         }
@@ -257,7 +312,7 @@ namespace QB {
          * Changes the current query to a subquery filtering the given (parentTable, parentColumn), so that the new
          * query is: <code>SELECT * FROM parentTable WHERE parentColumn IN (SELECT sourceColumn FROM {query})</code>.
          */
-        onClickReferenceColumn(sourceColumn: string, parentTable: string, parentColumn: string): void {
+        private onClickReferenceColumn(sourceColumn: string, parentTable: string, parentColumn: string): void {
             this.queryService.updateQuery(query => {
                 query.addSuperQuery(sourceColumn, parentTable, parentColumn);
 
@@ -274,7 +329,7 @@ namespace QB {
          * Adds a subquery to the current query such that the new query becomes:
          * <code>{query} WHERE sourceColumn IN (SELECT subqueryColumn FROM subqueryTable)</code>.
          */
-        onClickWhereIn(sourceColumn: string, subqueryTable: string, subqueryColumn: string): void {
+        private onClickWhereIn(sourceColumn: string, subqueryTable: string, subqueryColumn: string): void {
             this.queryService.updateQuery(query => {
                 query.addSubQuery(sourceColumn, subqueryTable, subqueryColumn);
 
@@ -284,4 +339,8 @@ namespace QB {
             });
         }
     }
+
+    type MappedTableReference = TableReference & {
+        reversed: boolean;
+    };
 }

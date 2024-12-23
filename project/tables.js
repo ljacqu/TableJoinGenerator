@@ -9,10 +9,16 @@ const __tables = {
             "solved": "datetime"
         },
         "references": {
-            "owner_id": [{
-                "table": "nq_owner",
-                "column": "id"
-            }],
+            "owner_id": [
+                {
+                    "table": "nq_owner",
+                    "column": "id"
+                },
+                {
+                    "table": "nq_secret",
+                    "column": "owner_id"
+                }
+            ],
             "question_id": [{
                 "table": "nq_question",
                 "column": "id"
@@ -146,17 +152,15 @@ const __tables = {
                     "joinVariants": [
                         {
                             "name": "demo",
-                            "filter": "type = 'DEMO'"
+                            "alias": "ds",
+                            "filter": "ds.type = 'DEMO'"
                         },
                         {
                             "name": "real",
-                            "filter": "type = 'REAL'"
+                            "alias": "rs",
+                            "filter": "rs.type = 'REAL'"
                         }
                     ]
-                },
-                {
-                    "table": "nq_draw",
-                    "column": "owner_id"
                 }
             ]
         },

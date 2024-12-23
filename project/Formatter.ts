@@ -60,9 +60,17 @@ namespace QB {
 
             if (query.leftJoin) {
                 query.leftJoin.forEach(lj => {
-                    result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true)
-                        + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true)
-                        + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true);
+                    if (lj.joinVariant) {
+                        result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, false)
+                            + ' ' + lj.joinVariant.alias
+                            + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true)
+                            + ' = ' + lj.joinVariant.alias + '.' + this.formatColumn(lj.sourceTable, lj.sourceColumn, false)
+                            + nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariant.filter;
+                    } else {
+                        result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true)
+                            + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true)
+                            + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true);
+                    }
                 });
             }
 

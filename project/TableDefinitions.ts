@@ -12,7 +12,7 @@ namespace QB {
         }
 
         static getColumnType(table: string, column: string): string {
-            return this.tables![table].columns[column];
+            return this.tables[table].columns[column];
         }
 
         static getColumns(table: string): ColumnDef {
@@ -29,7 +29,7 @@ namespace QB {
                         targetTable: reference.table,
                         targetColumn: reference.column,
                         joinVariants: reference.joinVariants
-                    })
+                    });
                 });
             });
             return result;
@@ -83,6 +83,7 @@ namespace QB {
 
     export type TableReferenceJoinVariant = {
         name: string;
+        alias: string;
         filter: string;
     };
 

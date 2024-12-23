@@ -17,6 +17,10 @@ namespace QB {
             return this.query.collectTopLevelTables();
         }
 
+        getLeftJoins(): QueryLeftJoin[] {
+            return this.query.getQuery()?.leftJoin ?? [];
+        }
+
         showWhereQueryInButton(): boolean {
             return this.configShowWhereInButton && !this.query.hasWhereInClause();
         }
