@@ -253,8 +253,7 @@ namespace QB {
             this.tablesContainer.append(columnElem);
         }
 
-        private mapTableReference(reference: MappedTableReference,
-                                  tables: Set<string>): QueryLeftJoin[] {
+        private mapTableReference(reference: MappedTableReference, tables: Set<string>): QueryLeftJoin[] {
             // Allow to apply a join variant only if the table with the variant is joined in, i.e. it was reversed
             const canApplyJoinVariants =
                 MenuHandler.isNotNullAndNotEmpty(reference.joinVariants) && reference.reversed;
@@ -274,8 +273,21 @@ namespace QB {
 
             // Can apply join variants
             const currentLeftJoins = this.queryService.getLeftJoins();
+
+            // If generic joins already exist for the source and target table, behave like other generic tables and
+            // don't offer it as additional join. E.g. for three tables A, B, C, if we have an active left join for
+            // A-C and A-B, then we won't offer B-C even though it may exist.
+            const tablesOfGenericJoins = new Set<string>();
+            currentLeftJoins.filter(lj => !lj.joinVariant)
+                .forEach(lj => {
+                    tablesOfGenericJoins.add(lj.sourceTable);
+                    tablesOfGenericJoins.add(lj.targetTable);
+                });
+            if (tablesOfGenericJoins.has(reference.sourceTable) && tablesOfGenericJoins.has(reference.targetTable)) {
+                return [];
+            }
+
             const possibleJoins: QueryLeftJoin[] = [];
-            // TODO: if we have a generic 'join', need to filter it out as soon as there is a join variant
             reference.joinVariants!.forEach(joinVariant => {
                 const variantAlreadyUsed = currentLeftJoins.some(
                     lj => lj.sourceTable === reference.sourceTable
