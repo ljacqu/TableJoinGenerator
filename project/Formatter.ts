@@ -7,10 +7,11 @@ namespace QB {
                     private schema?: string) {
         }
 
-        private formatTable(tableName: string, includeAlias: boolean = false): string {
+        private formatTable(tableName: string, includeAlias: boolean = false,
+                            manualAlias?: string): string {
             const tableReference = this.schema ? `${this.schema}.${tableName}` : tableName;
             if (includeAlias) {
-                const alias = this.aliasFn(tableName);
+                const alias = manualAlias ?? this.aliasFn(tableName);
                 if (alias) {
                     return tableReference + ' ' + alias;
                 }
@@ -18,12 +19,13 @@ namespace QB {
             return tableReference;
         }
 
-        private formatColumn(tableName: string, columnName: string, useColNameWithTable: boolean = false): string {
+        private formatColumn(tableName: string, columnName: string, useColNameWithTable: boolean = false,
+                             manualAlias?: string): string {
             if (!useColNameWithTable) {
                 return `<span class="sql-column">${columnName}</span>`;
             }
 
-            const alias = this.aliasFn(tableName);
+            const alias = manualAlias ?? this.aliasFn(tableName);
             const tableReference = alias ? alias : this.formatTable(tableName);
             return `${tableReference}.<span class="sql-column">${columnName}</span>`;
         }
@@ -60,16 +62,12 @@ namespace QB {
 
             if (query.leftJoin) {
                 query.leftJoin.forEach(lj => {
-                    if (lj.joinVariant) {
-                        result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, false)
-                            + ' ' + lj.joinVariant.alias
-                            + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true)
-                            + ' = ' + lj.joinVariant.alias + '.' + this.formatColumn(lj.sourceTable, lj.sourceColumn, false)
-                            + nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariant.filter;
-                    } else {
-                        result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true)
-                            + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true)
-                            + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true);
+                    const targetTableAlias = lj.joinVariant?.alias;
+                    result += nlIndent + '<span class="sql-keyword">LEFT JOIN</span> ' + this.formatTable(lj.targetTable, true, targetTableAlias)
+                        + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true, targetTableAlias)
+                        + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true);
+                    if (lj.joinVariant?.filter) {
+                        result += nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariant.filter;
                     }
                 });
             }

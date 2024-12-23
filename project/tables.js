@@ -153,12 +153,12 @@ const __tables = {
                         {
                             "name": "demo",
                             "alias": "ds",
-                            "filter": "ds.type = 'DEMO'"
+                            "filter": "ds.<span class=\"sql-column\">type</span> = '<span class=\"sql-text\">DEMO</span>'"
                         },
                         {
                             "name": "real",
                             "alias": "rs",
-                            "filter": "rs.type = 'REAL'"
+                            "filter": "rs.<span class=\"sql-column\">type</span> = '<span class=\"sql-text\">REAL</span>'"
                         }
                     ]
                 }
