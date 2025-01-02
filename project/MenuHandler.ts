@@ -235,8 +235,10 @@ namespace QB {
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
                 const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
-                const nameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
-                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${nameAddition}`;
+                const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
+                const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
+                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
+                    + ` &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
                 li.append(spanWithTableColumn);
 
                 spanWithTableColumn.addEventListener('click', () => {
@@ -254,26 +256,53 @@ namespace QB {
         }
 
         private mapTableReference(reference: MappedTableReference, tables: Set<string>): QueryLeftJoin[] {
-            // Allow to apply a join variant only if the table with the variant is joined in, i.e. it was reversed
+            // Allow to apply a join variant only if the table with the variant is joined in, i.e. the reference was reversed
             const canApplyJoinVariants =
                 MenuHandler.isNotNullAndNotEmpty(reference.joinVariants) && reference.reversed;
+            const currentLeftJoins = this.queryService.getLeftJoins();
+
             if (!canApplyJoinVariants) {
                 if (tables.has(reference.sourceTable) && tables.has(reference.targetTable)) {
                     return [];
                 }
-                return [
-                    {
-                        sourceTable: reference.sourceTable,
-                        sourceColumn: reference.sourceColumn,
-                        targetTable: reference.targetTable,
-                        targetColumn: reference.targetColumn
+
+                const sourceTableAliases = new Set<string | undefined>();
+                const targetTableAliases = new Set<string | undefined>();
+                for (const currentLeftJoin of currentLeftJoins) {
+                    if (currentLeftJoin.sourceTable === reference.sourceTable) {
+                        sourceTableAliases.add(currentLeftJoin.sourceTableAlias);
                     }
-                ];
+                    if (currentLeftJoin.targetTable === reference.sourceTable) {
+                        sourceTableAliases.add(currentLeftJoin.targetTableAlias);
+                    }
+                    if (currentLeftJoin.sourceTable === reference.targetTable) {
+                        targetTableAliases.add(currentLeftJoin.sourceTableAlias);
+                    }
+                    if (currentLeftJoin.targetTable === reference.targetTable) {
+                        targetTableAliases.add(currentLeftJoin.targetTableAlias);
+                    }
+                }
+                MenuHandler.addUndefinedIfEmpty(sourceTableAliases);
+                MenuHandler.addUndefinedIfEmpty(targetTableAliases);
+
+                const result: QueryLeftJoin[] = [];
+                for (const sourceTableAlias of sourceTableAliases) {
+                    for (const targetTableAlias of targetTableAliases) {
+                        result.push({
+                            sourceTable: reference.sourceTable,
+                            sourceColumn: reference.sourceColumn,
+                            sourceTableAlias: sourceTableAlias,
+                            targetTable: reference.targetTable,
+                            targetColumn: reference.targetColumn,
+                            targetTableAlias: targetTableAlias
+                        });
+                    }
+                }
+                return result;
             }
 
             // Can apply join variants
-            const currentLeftJoins = this.queryService.getLeftJoins();
-
+            // -----------------------
             // If generic joins already exist for the source and target table, behave like other generic tables and
             // don't offer it as additional join. E.g. for three tables A, B, C, if we have an active left join for
             // A-C and A-B, then we won't offer B-C even though it may exist.
@@ -287,6 +316,17 @@ namespace QB {
                 return [];
             }
 
+            const sourceTableAliases = new Set<string | undefined>();
+            for (const currentLeftJoin of currentLeftJoins) {
+                if (currentLeftJoin.sourceTable === reference.sourceTable) {
+                    sourceTableAliases.add(currentLeftJoin.sourceTableAlias);
+                }
+                if (currentLeftJoin.targetTable === reference.sourceTable) {
+                    sourceTableAliases.add(currentLeftJoin.targetTableAlias);
+                }
+            }
+            MenuHandler.addUndefinedIfEmpty(sourceTableAliases);
+
             const possibleJoins: QueryLeftJoin[] = [];
             reference.joinVariants!.forEach(joinVariant => {
                 const variantAlreadyUsed = currentLeftJoins.some(
@@ -294,15 +334,18 @@ namespace QB {
                     && lj.targetTable === reference.targetTable
                     && lj.joinVariantName === joinVariant.name);
                 if (!variantAlreadyUsed) {
-                    possibleJoins.push({
-                        sourceTable: reference.sourceTable,
-                        sourceColumn: reference.sourceColumn,
-                        targetTable: reference.targetTable,
-                        targetColumn: reference.targetColumn,
-                        targetTableAlias: joinVariant.alias,
-                        joinVariantName: joinVariant.name,
-                        joinVariantFilter: joinVariant.filter
-                    });
+                    for (const sourceTableAlias of sourceTableAliases) {
+                        possibleJoins.push({
+                            sourceTable: reference.sourceTable,
+                            sourceColumn: reference.sourceColumn,
+                            sourceTableAlias: sourceTableAlias,
+                            targetTable: reference.targetTable,
+                            targetColumn: reference.targetColumn,
+                            targetTableAlias: joinVariant.alias,
+                            joinVariantName: joinVariant.name,
+                            joinVariantFilter: joinVariant.filter
+                        });
+                    }
                 }
             });
 
@@ -311,6 +354,12 @@ namespace QB {
 
         private static isNotNullAndNotEmpty(arr?: any[]): boolean {
             return !!arr && arr.length > 0;
+        }
+
+        private static addUndefinedIfEmpty(set: Set<any | undefined>): void {
+            if (set.size === 0) {
+                set.add(undefined);
+            }
         }
 
         private onClickLeftJoinColumn(tableJoin: QueryLeftJoin) {

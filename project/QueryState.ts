@@ -162,11 +162,11 @@ namespace QB {
     export type QueryLeftJoin = {
         sourceTable:  string;
         sourceColumn: string;
+        sourceTableAlias?: string;
         targetTable:  string;
         targetColumn: string;
+        targetTableAlias?: string;
         joinVariantFilter?: string;
         joinVariantName?: string;
-        sourceTableAlias?: string;
-        targetTableAlias?: string;
     };
 }
