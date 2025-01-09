@@ -17,6 +17,38 @@ namespace QB {
             return this.query.collectTopLevelTables();
         }
 
+        collectSelectedTableAliasPairs(): { table: string; manualAlias: string | undefined }[] {
+            const aliasesByTable = new Map<string, Set<string | undefined>>();
+            aliasesByTable.set(this.query.getCurrentSelectedTable(), new Set<string | undefined>([ undefined ]));
+
+            this.getLeftJoins().forEach(lj => {
+                const sourceAliases = aliasesByTable.get(lj.sourceTable);
+                if (sourceAliases === undefined) {
+                    aliasesByTable.set(lj.sourceTable, new Set<string | undefined>([ lj.sourceTableAlias ]));
+                } else {
+                    sourceAliases.add(lj.sourceTableAlias);
+                }
+                const targetAliases = aliasesByTable.get(lj.targetTable);
+                if (targetAliases === undefined) {
+                    aliasesByTable.set(lj.targetTable, new Set<string | undefined>([ lj.targetTableAlias ]));
+                } else {
+                    targetAliases.add(lj.targetTableAlias);
+                }
+            });
+
+            const result: { table: string; manualAlias: string | undefined }[] = [];
+            for (let [table, aliases] of aliasesByTable) {
+                aliases.forEach(alias => {
+                    result.push({table: table, manualAlias: alias});
+                });
+            }
+            return result;
+        }
+
+        getLeftJoins(): QueryLeftJoin[] {
+            return this.query.getQuery()?.leftJoin ?? [];
+        }
+
         showWhereQueryInButton(): boolean {
             return this.configShowWhereInButton && !this.query.hasWhereInClause();
         }
@@ -25,8 +57,8 @@ namespace QB {
             return this.query.getPastColumns();
         }
 
-        hasColumnSelect(table: string, column: string): boolean {
-            return this.query.hasColumnSelect(table, column);
+        hasColumnSelect(table: string, column: string, alias?: string): boolean {
+            return this.query.hasColumnSelect(table, column, alias);
         }
 
         hasAnyColumnSelect(): boolean {
