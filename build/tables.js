@@ -9,10 +9,16 @@ const __tables = {
             "solved": "datetime"
         },
         "references": {
-            "owner_id": [{
-                "table": "nq_owner",
-                "column": "id"
-            }],
+            "owner_id": [
+                {
+                    "table": "nq_owner",
+                    "column": "id"
+                },
+                {
+                    "table": "nq_secret",
+                    "column": "owner_id"
+                }
+            ],
             "question_id": [{
                 "table": "nq_question",
                 "column": "id"
@@ -129,6 +135,37 @@ const __tables = {
             }]
         },
         "highlights": {}
+    },
+    "nq_secret": {
+        "alias": "sec",
+        "columns": {
+            "id": "int",
+            "type": "varchar",
+            "value": "varchar",
+            "owner_id": "int"
+        },
+        "references": {
+            "owner_id": [
+                {
+                    "table": "nq_owner",
+                    "column": "id",
+                    "joinVariants": [
+                        {
+                            "name": "demo",
+                            "alias": "ds",
+                            "filter": "$ALIAS.<span class=\"sql-column\">type</span> = '<span class=\"sql-text\">DEMO</span>'"
+                        },
+                        {
+                            "name": "real",
+                            "alias": "rs",
+                            "filter": "$ALIAS.<span class=\"sql-column\">type</span> = '<span class=\"sql-text\">REAL</span>'"
+                        }
+                    ]
+                }
+            ]
+        },
+        "highlights": {
+        }
     },
     "nq_settings": {
         "alias": "stg",
