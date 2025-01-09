@@ -127,9 +127,9 @@ const __aliasFn = function (tableName) {
 // Show internal query object as JSON
 const __debug = false;
 
-// Show the '⊆' button that ADDS a subquery to the current table. Can be hidden if there are too many buttons,
-// as clicking on a table will take the current query as subquery, which is possible in more situations than
-// the '⊆' button. Hide to simplify the UI.
+// Show the '⊆' button that *adds* a subquery to the current table. If you feel that there are too many buttons,
+// you can hide this to simplify the UI. Clicking on a table name will take the current query and use it as subquery,
+// which is possible in more situations than this button.
 const __showWhereInButton = true;
 
 // -------------
@@ -160,8 +160,7 @@ m_aggregateButton.initializeOnClickHandler(() => onClickAggregateButton());
 
 // Initialization
 m_menuHandler.showInitialTables();
-const versionElem = document.getElementById('version');
-versionElem.innerText = `v. ${__version}`;
+document.getElementById('version').innerText = `v. ${__version}`;
 </script>
 </body>
 </html>

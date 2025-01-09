@@ -68,13 +68,11 @@ namespace QB {
             this.pastColumns.add({table: childTable, column: childColumn});
         }
 
-        addLeftJoin(sourceTable: string, sourceColumn: string, targetTable: string, targetColumn: string): void {
+        addLeftJoin(leftJoin: QueryLeftJoin): void {
             if (!this.query!.leftJoin) {
                 this.query!.leftJoin = [];
             }
-            this.query!.leftJoin.push({
-                sourceTable, sourceColumn, targetTable, targetColumn
-            });
+            this.query!.leftJoin.push(leftJoin);
         }
 
         setAggregate(aggregate: boolean): void {
@@ -85,11 +83,11 @@ namespace QB {
             this.query!.select = [];
         }
 
-        addColumnSelect(table: string, column: string): void {
+        addColumnSelect(table: string, column: string, manualAlias?: string): void {
             if (!this.query!.select) {
                 this.query!.select = [];
             }
-            this.query!.select.push({table, column});
+            this.query!.select.push({table, column, manualAlias});
         }
 
         // ---------
@@ -116,11 +114,21 @@ namespace QB {
             return !!this.query?.subqueryFilterColumn;
         }
 
-        hasColumnSelect(table: string, column: string): boolean {
+        hasColumnSelect(table: string, column: string, alias?: string): boolean {
             if (!this.query || !this.query.select) {
                 return false;
             }
-            return this.query.select.some(select => select.table === table && select.column === column);
+            return this.query.select.some(
+                select => select.table === table
+                && select.column === column
+                && select.manualAlias === alias);
+        }
+
+        hasAnyColumnSelect(): boolean {
+            if (this.query?.select) {
+                return this.query.select.length > 0;
+            }
+            return false;
         }
 
         getQuery(): Query | null {
@@ -157,7 +165,11 @@ namespace QB {
     export type QueryLeftJoin = {
         sourceTable:  string;
         sourceColumn: string;
+        sourceTableAlias?: string;
         targetTable:  string;
         targetColumn: string;
+        targetTableAlias?: string;
+        joinVariantFilter?: string;
+        joinVariantName?: string;
     };
 }
