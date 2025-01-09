@@ -19,7 +19,7 @@ namespace QB {
             return tableReference;
         }
 
-        private formatColumn(tableName: string, columnName: string, useColNameWithTable: boolean = false,
+        private formatColumn(tableName: string, columnName: string, useColNameWithTable: boolean,
                              manualAlias?: string): string {
             if (!useColNameWithTable) {
                 return `<span class="sql-column">${columnName}</span>`;
@@ -44,8 +44,8 @@ namespace QB {
 
             let result = indent + '<span class="sql-keyword">SELECT</span> ';
             if (!!query.select?.length) {
-                result += query.select!
-                    .map(select => this.formatColumn(select.table, select.column, useColNameWithTable))
+                result += query.select
+                    .map(select => this.formatColumn(select.table, select.column, useColNameWithTable, select.manualAlias))
                     .join('\n     , ');
                 if (query.aggregate) {
                     result += '\n     , <span class="sql-keyword">COUNT(<span class="sql-number">1</span>) AS <span class="sql-text">total</span></span>';
@@ -66,7 +66,7 @@ namespace QB {
                         + nlIndent + '  <span class="sql-keyword">ON</span> ' + this.formatColumn(lj.targetTable, lj.targetColumn, true, lj.targetTableAlias)
                         + ' = ' + this.formatColumn(lj.sourceTable, lj.sourceColumn, true, lj.sourceTableAlias);
                     if (lj.joinVariantFilter) {
-                        result += nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariantFilter;
+                        result += nlIndent + '    <span class="sql-keyword">AND</span> ' + lj.joinVariantFilter.replaceAll('$ALIAS', lj.targetTableAlias!);
                     }
                 });
             }

@@ -83,11 +83,11 @@ namespace QB {
             this.query!.select = [];
         }
 
-        addColumnSelect(table: string, column: string): void {
+        addColumnSelect(table: string, column: string, manualAlias?: string): void {
             if (!this.query!.select) {
                 this.query!.select = [];
             }
-            this.query!.select.push({table, column});
+            this.query!.select.push({table, column, manualAlias});
         }
 
         // ---------
@@ -114,11 +114,14 @@ namespace QB {
             return !!this.query?.subqueryFilterColumn;
         }
 
-        hasColumnSelect(table: string, column: string): boolean {
+        hasColumnSelect(table: string, column: string, alias?: string): boolean {
             if (!this.query || !this.query.select) {
                 return false;
             }
-            return this.query.select.some(select => select.table === table && select.column === column);
+            return this.query.select.some(
+                select => select.table === table
+                && select.column === column
+                && select.manualAlias === alias);
         }
 
         hasAnyColumnSelect(): boolean {

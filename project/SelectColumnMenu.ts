@@ -23,14 +23,15 @@ namespace QB {
         }
 
         private createListElementWithSelectableColumns() {
-            const tables = this.queryService.collectTopLevelTables();
+            const tables = this.queryService.collectSelectedTableAliasPairs();
             const columns: any[] = [];
             tables.forEach(table => {
-                for (const col in QB.TableDefinitions.getColumns(table)) {
+                for (const col in QB.TableDefinitions.getColumns(table.table)) {
                     columns.push({
-                        table: table,
+                        table: table.table,
                         column: col,
-                        active: this.queryService.hasColumnSelect(table, col)
+                        manualAlias: table.manualAlias,
+                        active: this.queryService.hasColumnSelect(table.table, col, table.manualAlias)
                     });
                 }
             });
@@ -49,9 +50,13 @@ namespace QB {
             const ul = document.createElement('ul');
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col.table + '.' + col.column;
+                li.innerText = col.table + '.' + col.column
+                    + (col.manualAlias ? ` (${col.manualAlias})` : '');
                 li.dataset.table = col.table;
                 li.dataset.column = col.column;
+                if (col.manualAlias) {
+                    li.dataset.manualAlias = col.manualAlias;
+                }
                 if (col.active) {
                     li.classList.add('active-column');
                 }
@@ -77,7 +82,8 @@ namespace QB {
                     if (column instanceof HTMLElement && column.classList.contains('active-column')) {
                         const tableTable = column.dataset.table as string;
                         const columnName = column.dataset.column as string;
-                        query.addColumnSelect(tableTable, columnName);
+                        const manualAlias = column.dataset.manualAlias as string | undefined;
+                        query.addColumnSelect(tableTable, columnName, manualAlias);
                     }
                 }
 
