@@ -135,32 +135,10 @@ const __showWhereInButton = true;
 // -------------
 // End config
 // -------------
+
 const __version = 'local';
+QB.Initializer.init(__version, __tables, __aliasFn, __schema, __debug, __showWhereInButton);
 
-QB.TableDefinitions.init(__tables);
-const m_sqlTypeHandler = new QB.SqlTypeHandler();
-const m_formatter = new QB.Formatter(m_sqlTypeHandler, __aliasFn, __schema);
-const m_query = new QB.QueryState();
-const m_aggregateButton = new QB.AggregateButton(QB.DocElemHelper.getElementById('btn_agg'));
-const m_queryService = new QB.QueryService(m_query, m_formatter, __debug, __showWhereInButton);
-const m_selectColumnMenu = new QB.SelectColumnMenu(m_queryService);
-const m_menuHandler = new QB.MenuHandler(QB.DocElemHelper.getElementById('tables'),
-    m_aggregateButton, m_queryService, m_sqlTypeHandler, m_selectColumnMenu);
-
-function onClickAggregateButton() {
-    m_queryService.updateQuery(query => {
-        const newValue = m_aggregateButton.toggle();
-        query.setAggregate(newValue);
-    });
-}
-
-// Set up button onclick behavior
-document.getElementById('btn_reset').addEventListener('click', () => m_menuHandler.showInitialTables());
-m_aggregateButton.initializeOnClickHandler(() => onClickAggregateButton());
-
-// Initialization
-m_menuHandler.showInitialTables();
-document.getElementById('version').innerText = `v. ${__version}`;
 </script>
 </body>
 </html>
