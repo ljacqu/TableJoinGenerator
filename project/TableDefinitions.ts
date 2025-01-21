@@ -60,6 +60,11 @@ namespace QB {
         static getAllTables(): TableDefs {
             return this.tables;
         }
+
+        static getStyle(table: string): TableStyle {
+            const tableDef = this.tables[table];
+            return tableDef.style ?? {};
+        }
     }
 
     type TableDefs = {
@@ -70,7 +75,7 @@ namespace QB {
         alias?: string;
         columns: ColumnDef;
         references: TableReferencesHolder;
-        style: { };
+        style?: TableStyle;
     };
 
     export type TableReferencesHolder = {
@@ -98,4 +103,8 @@ namespace QB {
     export type ColumnDef = {
         [columnName: string]: string
     };
+
+    export type TableStyle = {
+        table?: string;
+    }
 }

@@ -50,7 +50,8 @@ namespace QB {
             const ul = document.createElement('ul');
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col.table + '.' + col.column
+                const tableClass = TableDefinitions.getStyle(col.table).table ?? '';
+                li.innerHTML = `<span class="${tableClass}">${col.table}</span>.${col.column}`
                     + (col.manualAlias ? ` (${col.manualAlias})` : '');
                 li.dataset.table = col.table;
                 li.dataset.column = col.column;

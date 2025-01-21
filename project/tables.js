@@ -24,7 +24,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "table": "question"
+        }
     },
     "nq_draw_answer": {
         "alias": "ans",
@@ -42,7 +44,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "table": "question"
+        }
     },
     "nq_draw_stats": {
         "alias": "stat",
@@ -134,7 +138,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "table": "question"
+        }
     },
     "nq_secret": {
         "alias": "sec",

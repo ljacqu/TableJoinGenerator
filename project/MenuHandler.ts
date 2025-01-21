@@ -19,7 +19,8 @@ namespace QB {
             this.tablesContainer.innerHTML = '<h3>Tables</h3>';
 
             for (const table in QB.TableDefinitions.getAllTables()) {
-                const btn = DocElemHelper.newElemWithClass('button', 'btn-table');
+                const btn = document.createElement('button');
+                btn.className = 'btn-table' + this.getCustomClassSuffix(table);
                 btn.innerText = table;
 
                 btn.addEventListener('click', () => {
@@ -198,7 +199,8 @@ namespace QB {
                 }
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
+                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
+                    + this.getCustomClassSuffix(ref.targetTable);
                 spanWithTableColumn.innerHTML = ` <span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
                 li.append(spanWithTableColumn);
 
@@ -234,11 +236,13 @@ namespace QB {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
+                const targetTableCssClasses = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
+                    + this.getCustomClassSuffix(ref.targetTable);
+                const sourceTableCssClasses = 'lj-past' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
                 const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
-                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
-                    + ` &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
+                spanWithTableColumn.innerHTML = ` <b class="${sourceTableCssClasses}">${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
+                    + ` &rarr; <span class="${targetTableCssClasses}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
                 li.append(spanWithTableColumn);
 
                 spanWithTableColumn.addEventListener('click', () => {
@@ -400,6 +404,14 @@ namespace QB {
                 this.showFilterColumnsSubQuery(subqueryTable);
                 this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList());
             });
+        }
+
+        private getCustomClassSuffix(table: string): string {
+            const styleDef = TableDefinitions.getStyle(table);
+            if (styleDef.table) {
+                return ' ' + styleDef.table;
+            }
+            return '';
         }
     }
 
