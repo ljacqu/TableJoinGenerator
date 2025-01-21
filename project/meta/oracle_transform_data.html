@@ -65,7 +65,7 @@ T_GHI,DEF_ID,T_DEF,ID
 
             const tableName = columnEntries[0].trim();
             if (!tableData[tableName]) {
-                tableData[tableName] = { alias: '', columns: {}, references: {}, highlights: {} };
+                tableData[tableName] = { alias: '', columns: {}, references: {}, style: {} };
             }
             const tableEntry = tableData[tableName];
 

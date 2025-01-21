@@ -70,7 +70,7 @@ namespace QB {
         alias?: string;
         columns: ColumnDef;
         references: TableReferencesHolder;
-        highlights: { };
+        style: { };
     };
 
     export type TableReferencesHolder = {

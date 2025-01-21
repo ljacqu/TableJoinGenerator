@@ -24,7 +24,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_draw_answer": {
         "alias": "ans",
@@ -42,7 +42,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_draw_stats": {
         "alias": "stat",
@@ -60,7 +60,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_owner": {
         "alias": "own",
@@ -83,7 +83,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_owner_nightbot": {
         "alias": "nbot",
@@ -105,7 +105,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_owner_stats": {
         "alias": "ownstat",
@@ -115,7 +115,7 @@ const __tables = {
             "public_page_url": "varchar"
         },
         "references": {},
-        "highlights": {}
+        "style": {}
     },
     "nq_question": {
         "alias": "q",
@@ -134,7 +134,7 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {}
     },
     "nq_secret": {
         "alias": "sec",
@@ -164,7 +164,7 @@ const __tables = {
                 }
             ]
         },
-        "highlights": {
+        "style": {
         }
     },
     "nq_settings": {
@@ -187,6 +187,6 @@ const __tables = {
             "repeat_unanswered_question": "int"
         },
         "references": {},
-        "highlights": {}
+        "style": {}
     }
 };
