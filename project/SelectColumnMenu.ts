@@ -47,7 +47,7 @@ namespace QB {
                 }
             });
 
-            const ul = document.createElement('ul');
+            const ul = DocElemHelper.newElemWithClass('ul', 'column-select');
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 const tableClass = TableDefinitions.getStyle(col.table).table ?? '';

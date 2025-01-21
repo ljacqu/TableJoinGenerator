@@ -17,6 +17,7 @@ namespace QB {
             });
 
             this.tablesContainer.innerHTML = '<h3>Tables</h3>';
+            this.tablesContainer.className = 'phase-initial';
 
             for (const table in QB.TableDefinitions.getAllTables()) {
                 const btn = document.createElement('button');
@@ -170,6 +171,7 @@ namespace QB {
             this.aggregateButton.show();
 
             this.tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
+            this.tablesContainer.className = 'phase-related';
             const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
             this.tablesContainer.append(ul);
 
@@ -230,6 +232,7 @@ namespace QB {
             }
 
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
+            this.tablesContainer.className = 'phase-left-join';
             const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
             this.tablesContainer.append(ul);
             possibleJoins.forEach(ref => {
@@ -238,7 +241,7 @@ namespace QB {
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
                 const targetTableCssClasses = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
                     + this.getCustomClassSuffix(ref.targetTable);
-                const sourceTableCssClasses = 'lj-past' + this.getCustomClassSuffix(ref.sourceTable);
+                const sourceTableCssClasses = 'lj-source' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
                 const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
                 spanWithTableColumn.innerHTML = ` <b class="${sourceTableCssClasses}">${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
