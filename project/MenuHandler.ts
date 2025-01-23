@@ -60,6 +60,15 @@ namespace QB {
                 const columnClass = TableDefinitions.getStyle(table)[col] ?? '';
                 li.innerHTML = `<span class="${columnClass}">${col}</span>`;
                 li.addEventListener('click', () => this.createColumnFilterElem(table, col, li, false));
+                li.addEventListener('contextmenu', e => {
+                    e.preventDefault();
+                    this.queryService.updateQuery(query => {
+                        query.selectTable(table);
+                        query.addColumnSelect(table, col);
+                        this.showRelatedColumns(table);
+                        this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList());
+                    });
+                });
                 ul.append(li);
             }
 
