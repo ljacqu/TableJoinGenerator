@@ -1,10 +1,10 @@
-.tc-initial .question {
+.tl-initial .question {
     color: #006;
 }
-.tc-related .question {
+.tl-related .question {
     border-bottom: 1px solid #99f;
 }
-.lj-target.question {
+.rc-target.question {
     background-color: #ddf;
 }
 

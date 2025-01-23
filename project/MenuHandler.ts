@@ -17,9 +17,9 @@ namespace QB {
             });
 
             this.tablesContainer.innerHTML = '<h3>Tables</h3>';
-            this.tablesContainer.className = 'phase-initial';
+            this.tablesContainer.className = 'menu-initial';
 
-            const listContainer = DocElemHelper.newElemWithClass('div', 'table-list tc-initial');
+            const listContainer = DocElemHelper.newElemWithClass('div', 'table-list tl-initial');
             for (const table in TableDefinitions.getAllTables()) {
                 const btn = document.createElement('button');
                 btn.className = 'btn-table' + this.getCustomClassSuffix(table);
@@ -174,8 +174,8 @@ namespace QB {
             this.aggregateButton.show();
 
             this.tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
-            this.tablesContainer.className = 'phase-related';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tc-related');
+            this.tablesContainer.className = 'menu-related';
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tl-related');
 
             references.forEach(ref => {
                 const li = document.createElement('li');
@@ -235,16 +235,16 @@ namespace QB {
             }
 
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
-            this.tablesContainer.className = 'phase-left-join';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tc-left-join');
+            this.tablesContainer.className = 'menu-left-join';
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tl-left-join');
             possibleJoins.forEach(ref => {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const targetTableCssClasses = 'lj-target '
+                const targetTableCssClasses = 'rc-target '
                     + this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
                     + this.getCustomClassSuffix(ref.targetTable);
-                const sourceTableCssClasses = 'lj-source' + this.getCustomClassSuffix(ref.sourceTable);
+                const sourceTableCssClasses = 'rc-source' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
                 const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
                 spanWithTableColumn.innerHTML = ` <b class="${sourceTableCssClasses}">${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
