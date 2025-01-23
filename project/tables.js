@@ -25,7 +25,8 @@ const __tables = {
             }]
         },
         "style": {
-            "table": "question"
+            "table": "question",
+            "id": "primary"
         }
     },
     "nq_draw_answer": {
@@ -45,7 +46,9 @@ const __tables = {
             }]
         },
         "style": {
-            "table": "question"
+            "table": "question",
+            "id": "primary",
+            "answer": "red"
         }
     },
     "nq_draw_stats": {
@@ -64,7 +67,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner": {
         "alias": "own",
@@ -87,7 +92,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner_nightbot": {
         "alias": "nbot",
@@ -109,7 +116,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "style": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner_stats": {
         "alias": "ownstat",
@@ -119,7 +128,9 @@ const __tables = {
             "public_page_url": "varchar"
         },
         "references": {},
-        "style": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_question": {
         "alias": "q",
@@ -139,7 +150,9 @@ const __tables = {
             }]
         },
         "style": {
-            "table": "question"
+            "table": "question",
+            "id": "primary",
+            "category": "red"
         }
     },
     "nq_secret": {
@@ -171,6 +184,7 @@ const __tables = {
             ]
         },
         "style": {
+            "id": "primary"
         }
     },
     "nq_settings": {
@@ -193,6 +207,9 @@ const __tables = {
             "repeat_unanswered_question": "int"
         },
         "references": {},
-        "style": {}
+        "style": {
+            "id": "primary",
+            "active_mode": "red"
+        }
     }
 };

@@ -7,3 +7,14 @@
 .lj-target.question {
     background-color: #ddf;
 }
+
+.columns .red, .column-select .red {
+    font-weight: bold;
+}
+.columns .primary {
+    color: #030;
+    font-family: Consolas, monospace;
+}
+.column-select .primary {
+    font-family: Consolas, monospace;
+}

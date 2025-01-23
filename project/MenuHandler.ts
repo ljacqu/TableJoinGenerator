@@ -42,8 +42,8 @@ namespace QB {
                     });
                 });
 
-                this.tablesContainer.append(btn);
-                this.tablesContainer.append(document.createElement('br'));
+                listContainer.append(btn);
+                listContainer.append(document.createElement('br'));
             }
             this.tablesContainer.append(listContainer);
         }
@@ -55,9 +55,10 @@ namespace QB {
             }
 
             const ul = DocElemHelper.newElemWithClass('ul', 'columns');
-            for (const col in QB.TableDefinitions.getColumns(table)) {
+            for (const col in TableDefinitions.getColumns(table)) {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col;
+                const columnClass = TableDefinitions.getStyle(table)[col] ?? '';
+                li.innerHTML = `<span class="${columnClass}">${col}</span>`;
                 li.addEventListener('click', () => this.createColumnFilterElem(table, col, li, false));
                 ul.append(li);
             }

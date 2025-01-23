@@ -105,6 +105,7 @@ namespace QB {
     };
 
     export type TableStyle = {
-        table?: string;
+        // columnName, or "table" for the actual table name
+        [columnName: string]: string;
     }
 }
