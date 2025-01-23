@@ -70,4 +70,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Update build folder (automated change)
-          file_pattern: 'build/generator.html build/tables.js'
+          file_pattern: 'build/custom.css build/generator.html build/tables.js'
