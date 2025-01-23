@@ -23,7 +23,7 @@ namespace QB {
 
         static newElemWithClass(tagName: string, cssClassName: string): HTMLElement {
             const elem = document.createElement(tagName);
-            elem.classList.add(cssClassName);
+            elem.className = cssClassName;
             return elem;
         }
 

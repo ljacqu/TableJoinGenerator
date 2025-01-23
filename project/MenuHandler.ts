@@ -19,6 +19,7 @@ namespace QB {
             this.tablesContainer.innerHTML = '<h3>Tables</h3>';
             this.tablesContainer.className = 'phase-initial';
 
+            const listContainer = DocElemHelper.newElemWithClass('div', 'table-list tc-initial');
             for (const table in QB.TableDefinitions.getAllTables()) {
                 const btn = document.createElement('button');
                 btn.className = 'btn-table' + this.getCustomClassSuffix(table);
@@ -41,9 +42,10 @@ namespace QB {
                     });
                 });
 
-                this.tablesContainer.appendChild(btn);
-                this.tablesContainer.appendChild(document.createElement('br'));
+                this.tablesContainer.append(btn);
+                this.tablesContainer.append(document.createElement('br'));
             }
+            this.tablesContainer.append(listContainer);
         }
 
         /** Lists all columns of the given table to add a filter. Used when an initial table is selected. */
@@ -57,7 +59,7 @@ namespace QB {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 li.innerText = col;
                 li.addEventListener('click', () => this.createColumnFilterElem(table, col, li, false));
-                ul.appendChild(li);
+                ul.append(li);
             }
 
             btnElem.after(ul);
@@ -77,7 +79,7 @@ namespace QB {
                 li.addEventListener('click', () => {
                     this.createColumnFilterElem(table, col, li, true);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             }
 
             this.tablesContainer.append(title);
@@ -172,8 +174,7 @@ namespace QB {
 
             this.tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
             this.tablesContainer.className = 'phase-related';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
-            this.tablesContainer.append(ul);
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tc-related');
 
             references.forEach(ref => {
                 const li = document.createElement('li');
@@ -213,8 +214,9 @@ namespace QB {
                     e.preventDefault();
                     this.onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             });
+            this.tablesContainer.append(ul);
         }
 
         private showLeftJoinColumns(): void {
@@ -233,13 +235,13 @@ namespace QB {
 
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
             this.tablesContainer.className = 'phase-left-join';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
-            this.tablesContainer.append(ul);
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tc-left-join');
             possibleJoins.forEach(ref => {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const targetTableCssClasses = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
+                const targetTableCssClasses = 'lj-target '
+                    + this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
                     + this.getCustomClassSuffix(ref.targetTable);
                 const sourceTableCssClasses = 'lj-source' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
@@ -255,8 +257,9 @@ namespace QB {
                     e.preventDefault();
                     this.onClickLeftJoinColumn(ref);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             });
+            this.tablesContainer.append(ul);
 
             const columnElem = this.selectColumnMenu.generateColumnsButtonOrList();
             this.tablesContainer.append(columnElem);

@@ -1,19 +1,9 @@
-.phase-initial .question {
+.tc-initial .question {
     color: #006;
 }
-.phase-related .question {
+.tc-related .question {
     border-bottom: 1px solid #99f;
 }
-.phase-left-join .question {
+.lj-target.question {
     background-color: #ddf;
-}
-.lj-source.question {
-    background-color: transparent;
-}
-
-/* TODO: Need to undo all style rules if we don't want them in the select column list... */
-.column-select .question {
-    color: #000;
-    border-bottom: none;
-    background-color: transparent;
 }
