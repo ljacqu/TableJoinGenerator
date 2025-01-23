@@ -47,13 +47,18 @@ namespace QB {
                 }
             });
 
+            const includeTableName = tables.length > 1;
             const ul = DocElemHelper.newElemWithClass('ul', 'column-select');
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 const tableStyle = TableDefinitions.getStyle(col.table);
-                const tableClass = tableStyle.table ?? '';
+                let tablePrefix = '';
+                if (includeTableName) {
+                    const tableClass = tableStyle.table ?? '';
+                    tablePrefix = `<span class="tbl ${tableClass}">${col.table}</span>.`;
+                }
                 const columnClass = tableStyle[col.column] ?? '';
-                li.innerHTML = `<span class="tbl ${tableClass}">${col.table}</span>.<span class="col ${columnClass}">${col.column}</span>`
+                li.innerHTML = tablePrefix + `<span class="col ${columnClass}">${col.column}</span>`
                     + (col.manualAlias ? ` (${col.manualAlias})` : '');
                 li.dataset.table = col.table;
                 li.dataset.column = col.column;
