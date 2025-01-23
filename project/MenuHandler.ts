@@ -20,7 +20,7 @@ namespace QB {
             this.tablesContainer.className = 'phase-initial';
 
             const listContainer = DocElemHelper.newElemWithClass('div', 'table-list tc-initial');
-            for (const table in QB.TableDefinitions.getAllTables()) {
+            for (const table in TableDefinitions.getAllTables()) {
                 const btn = document.createElement('button');
                 btn.className = 'btn-table' + this.getCustomClassSuffix(table);
                 btn.innerText = table;
@@ -74,7 +74,7 @@ namespace QB {
             const title = DocElemHelper.newElemWithText('h3', `Filter subquery (${table})`);
 
             const ul = DocElemHelper.newElemWithClass('ul', 'columns');
-            for (const col in QB.TableDefinitions.getColumns(table)) {
+            for (const col in TableDefinitions.getColumns(table)) {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 li.innerText = col;
                 li.addEventListener('click', () => {
@@ -146,7 +146,7 @@ namespace QB {
             const references: MappedTableReference[] = [];
 
             // Add references from the current table
-            QB.TableDefinitions.collectAllReferences(curTable).forEach(reference => {
+            TableDefinitions.collectAllReferences(curTable).forEach(reference => {
                 references.push({
                     ...reference,
                     reversed: false
@@ -154,7 +154,7 @@ namespace QB {
             });
 
             // Check other tables for references targeting the current table
-            QB.TableDefinitions.collectReferencesToTable(curTable).forEach(reference => {
+            TableDefinitions.collectReferencesToTable(curTable).forEach(reference => {
                 references.push({
                     sourceTable: reference.targetTable,
                     sourceColumn: reference.targetColumn,

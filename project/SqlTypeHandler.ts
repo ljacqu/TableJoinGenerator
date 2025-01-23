@@ -18,7 +18,7 @@ namespace QB {
         }
 
         validateColumnFilterElem(table: string, column: string, value: string | null): void {
-            let columnType = QB.TableDefinitions.getColumnType(table, column);
+            let columnType = TableDefinitions.getColumnType(table, column);
             if (columnType.startsWith('timestamp')) {
                 columnType = 'timestamp';
             }

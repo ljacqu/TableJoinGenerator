@@ -26,7 +26,7 @@ namespace QB {
             const tables = this.queryService.collectSelectedTableAliasPairs();
             const columns: any[] = [];
             tables.forEach(table => {
-                for (const col in QB.TableDefinitions.getColumns(table.table)) {
+                for (const col in TableDefinitions.getColumns(table.table)) {
                     columns.push({
                         table: table.table,
                         column: col,
