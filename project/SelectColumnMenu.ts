@@ -26,7 +26,7 @@ namespace QB {
             const tables = this.queryService.collectSelectedTableAliasPairs();
             const columns: any[] = [];
             tables.forEach(table => {
-                for (const col in QB.TableDefinitions.getColumns(table.table)) {
+                for (const col in TableDefinitions.getColumns(table.table)) {
                     columns.push({
                         table: table.table,
                         column: col,
@@ -47,10 +47,18 @@ namespace QB {
                 }
             });
 
-            const ul = document.createElement('ul');
+            const includeTableName = tables.length > 1;
+            const ul = DocElemHelper.newElemWithClass('ul', 'column-select');
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col.table + '.' + col.column
+                const tableStyle = TableDefinitions.getStyle(col.table);
+                let tablePrefix = '';
+                if (includeTableName) {
+                    const tableClass = tableStyle.table ?? '';
+                    tablePrefix = `<span class="tbl ${tableClass}">${col.table}</span>.`;
+                }
+                const columnClass = tableStyle[col.column] ?? '';
+                li.innerHTML = tablePrefix + `<span class="col ${columnClass}">${col.column}</span>`
                     + (col.manualAlias ? ` (${col.manualAlias})` : '');
                 li.dataset.table = col.table;
                 li.dataset.column = col.column;

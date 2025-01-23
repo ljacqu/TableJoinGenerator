@@ -37,6 +37,7 @@ jobs:
       - name: Copy files to build folder
         run: |
           cp project/build.js       build/build.js
+          cp project/custom.css     build/custom.css
           cp project/generator.html build/generator.html
           cp project/tables.js      build/tables.js
 

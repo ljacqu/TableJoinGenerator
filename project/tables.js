@@ -24,7 +24,10 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "table": "question",
+            "id": "primary"
+        }
     },
     "nq_draw_answer": {
         "alias": "ans",
@@ -42,7 +45,11 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "table": "question",
+            "id": "primary",
+            "answer": "red"
+        }
     },
     "nq_draw_stats": {
         "alias": "stat",
@@ -60,7 +67,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner": {
         "alias": "own",
@@ -83,7 +92,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner_nightbot": {
         "alias": "nbot",
@@ -105,7 +116,9 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_owner_stats": {
         "alias": "ownstat",
@@ -115,7 +128,9 @@ const __tables = {
             "public_page_url": "varchar"
         },
         "references": {},
-        "highlights": {}
+        "style": {
+            "id": "primary"
+        }
     },
     "nq_question": {
         "alias": "q",
@@ -134,7 +149,11 @@ const __tables = {
                 "column": "id"
             }]
         },
-        "highlights": {}
+        "style": {
+            "table": "question",
+            "id": "primary",
+            "category": "red"
+        }
     },
     "nq_secret": {
         "alias": "sec",
@@ -164,7 +183,8 @@ const __tables = {
                 }
             ]
         },
-        "highlights": {
+        "style": {
+            "id": "primary"
         }
     },
     "nq_settings": {
@@ -187,6 +207,9 @@ const __tables = {
             "repeat_unanswered_question": "int"
         },
         "references": {},
-        "highlights": {}
+        "style": {
+            "id": "primary",
+            "active_mode": "red"
+        }
     }
 };

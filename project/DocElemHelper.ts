@@ -21,9 +21,9 @@ namespace QB {
             return nextSib;
         }
 
-        static newElemWithClass(tagName: string, cssClassName: string): HTMLElement {
+        static newElemWithClass(tagName: string, cssClassNames: string): HTMLElement {
             const elem = document.createElement(tagName);
-            elem.classList.add(cssClassName);
+            elem.className = cssClassNames;
             return elem;
         }
 

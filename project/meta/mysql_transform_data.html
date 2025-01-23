@@ -60,7 +60,7 @@ function generateTableData() {
     columns.forEach(col => {
         const tableName = col['TABLE_NAME'];
         if (!tableData[tableName]) {
-            tableData[tableName] = { alias: '', columns: {}, references: {}, highlights: {} };
+            tableData[tableName] = { alias: '', columns: {}, references: {}, style: {} };
         }
         const tableEntry = tableData[tableName];
 

@@ -17,9 +17,12 @@ namespace QB {
             });
 
             this.tablesContainer.innerHTML = '<h3>Tables</h3>';
+            this.tablesContainer.className = 'menu-initial';
 
-            for (const table in QB.TableDefinitions.getAllTables()) {
-                const btn = DocElemHelper.newElemWithClass('button', 'btn-table');
+            const listContainer = DocElemHelper.newElemWithClass('div', 'table-list tl-initial');
+            for (const table in TableDefinitions.getAllTables()) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-table' + this.getCustomClassSuffix(table);
                 btn.innerText = table;
 
                 btn.addEventListener('click', () => {
@@ -39,9 +42,10 @@ namespace QB {
                     });
                 });
 
-                this.tablesContainer.appendChild(btn);
-                this.tablesContainer.appendChild(document.createElement('br'));
+                listContainer.append(btn);
+                listContainer.append(document.createElement('br'));
             }
+            this.tablesContainer.append(listContainer);
         }
 
         /** Lists all columns of the given table to add a filter. Used when an initial table is selected. */
@@ -51,11 +55,21 @@ namespace QB {
             }
 
             const ul = DocElemHelper.newElemWithClass('ul', 'columns');
-            for (const col in QB.TableDefinitions.getColumns(table)) {
+            for (const col in TableDefinitions.getColumns(table)) {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
-                li.innerText = col;
+                const columnClass = TableDefinitions.getStyle(table)[col] ?? '';
+                li.innerHTML = `<span class="${columnClass}">${col}</span>`;
                 li.addEventListener('click', () => this.createColumnFilterElem(table, col, li, false));
-                ul.appendChild(li);
+                li.addEventListener('contextmenu', e => {
+                    e.preventDefault();
+                    this.queryService.updateQuery(query => {
+                        query.selectTable(table);
+                        query.addColumnSelect(table, col);
+                        this.showRelatedColumns(table);
+                        this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList());
+                    });
+                });
+                ul.append(li);
             }
 
             btnElem.after(ul);
@@ -69,13 +83,13 @@ namespace QB {
             const title = DocElemHelper.newElemWithText('h3', `Filter subquery (${table})`);
 
             const ul = DocElemHelper.newElemWithClass('ul', 'columns');
-            for (const col in QB.TableDefinitions.getColumns(table)) {
+            for (const col in TableDefinitions.getColumns(table)) {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 li.innerText = col;
                 li.addEventListener('click', () => {
                     this.createColumnFilterElem(table, col, li, true);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             }
 
             this.tablesContainer.append(title);
@@ -141,7 +155,7 @@ namespace QB {
             const references: MappedTableReference[] = [];
 
             // Add references from the current table
-            QB.TableDefinitions.collectAllReferences(curTable).forEach(reference => {
+            TableDefinitions.collectAllReferences(curTable).forEach(reference => {
                 references.push({
                     ...reference,
                     reversed: false
@@ -149,7 +163,7 @@ namespace QB {
             });
 
             // Check other tables for references targeting the current table
-            QB.TableDefinitions.collectReferencesToTable(curTable).forEach(reference => {
+            TableDefinitions.collectReferencesToTable(curTable).forEach(reference => {
                 references.push({
                     sourceTable: reference.targetTable,
                     sourceColumn: reference.targetColumn,
@@ -169,8 +183,8 @@ namespace QB {
             this.aggregateButton.show();
 
             this.tablesContainer.innerHTML = '<h3>Join/subquery table</h3>';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
-            this.tablesContainer.append(ul);
+            this.tablesContainer.className = 'menu-related';
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tl-related');
 
             references.forEach(ref => {
                 const li = document.createElement('li');
@@ -198,7 +212,8 @@ namespace QB {
                 }
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
+                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
+                    + this.getCustomClassSuffix(ref.targetTable);
                 spanWithTableColumn.innerHTML = ` <span class="${cssClass}">${ref.targetTable}</span> (${ref.targetColumn})`;
                 li.append(spanWithTableColumn);
 
@@ -209,8 +224,9 @@ namespace QB {
                     e.preventDefault();
                     this.onClickReferenceColumn(ref.sourceColumn, ref.targetTable, ref.targetColumn);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             });
+            this.tablesContainer.append(ul);
         }
 
         private showLeftJoinColumns(): void {
@@ -228,17 +244,20 @@ namespace QB {
             }
 
             this.tablesContainer.innerHTML = '<h3>Left join</h3>';
-            const ul = DocElemHelper.newElemWithClass('ul', 'table-list');
-            this.tablesContainer.append(ul);
+            this.tablesContainer.className = 'menu-left-join';
+            const ul = DocElemHelper.newElemWithClass('ul', 'table-list tl-left-join');
             possibleJoins.forEach(ref => {
                 const li = document.createElement('li');
 
                 const spanWithTableColumn = DocElemHelper.newElemWithClass('span', 'clicky');
-                const cssClass = this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn);
+                const targetTableCssClasses = 'rc-target '
+                    + this.getClassForRelatedColumn(ref.targetTable, ref.targetColumn)
+                    + this.getCustomClassSuffix(ref.targetTable);
+                const sourceTableCssClasses = 'rc-source' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
                 const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
-                spanWithTableColumn.innerHTML = ` <b>${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
-                    + ` &rarr; <span class="${cssClass}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
+                spanWithTableColumn.innerHTML = ` <b class="${sourceTableCssClasses}">${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
+                    + ` &rarr; <span class="${targetTableCssClasses}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
                 li.append(spanWithTableColumn);
 
                 spanWithTableColumn.addEventListener('click', () => {
@@ -248,8 +267,9 @@ namespace QB {
                     e.preventDefault();
                     this.onClickLeftJoinColumn(ref);
                 });
-                ul.appendChild(li);
+                ul.append(li);
             });
+            this.tablesContainer.append(ul);
 
             const columnElem = this.selectColumnMenu.generateColumnsButtonOrList();
             this.tablesContainer.append(columnElem);
@@ -400,6 +420,14 @@ namespace QB {
                 this.showFilterColumnsSubQuery(subqueryTable);
                 this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList());
             });
+        }
+
+        private getCustomClassSuffix(table: string): string {
+            const styleDef = TableDefinitions.getStyle(table);
+            if (styleDef.table) {
+                return ' ' + styleDef.table;
+            }
+            return '';
         }
     }
 
