@@ -80,19 +80,24 @@ namespace QB {
             }
 
             if (query.where) {
-                if (query.subqueryFilterColumn) { // already have a `WHERE`, now need an `AND`
-                    result += nlIndent + '  <span class="sql-keyword">AND</span> ';
-                } else {
-                    result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
-                }
-                result += this.formatColumn(query.table, query.where.column, useColNameWithTable);
-                if (!query.where.filter) {
-                    result += ' <span class="sql-keyword">IS NULL</span>';
-                } else if (query.where.filter === '!') {
-                    result += ' <span class="sql-keyword">IS NOT NULL</span>';
-                } else {
-                    result += ' = ' + this.sqlTypeHandler.formatValueForWhereClause(query.where.filter, query.table, query.where.column);
-                }
+                let isAdditionalFilter = !!query.subqueryFilterColumn; // already have a `WHERE`, so continue with `AND`
+                query.where.forEach(where => {
+                    if (isAdditionalFilter) {
+                        result += nlIndent + '  <span class="sql-keyword">AND</span> ';
+                    } else {
+                        result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
+                    }
+                    result += this.formatColumn(query.table, where.column, useColNameWithTable);
+                    if (!where.filter) {
+                        result += ' <span class="sql-keyword">IS NULL</span>';
+                    } else if (where.filter === '!') {
+                        result += ' <span class="sql-keyword">IS NOT NULL</span>';
+                    } else {
+                        result += ' = ' + this.sqlTypeHandler.formatValueForWhereClause(where.filter, query.table, where.column);
+                    }
+
+                    isAdditionalFilter = true;
+                });
             }
             if (query.aggregate && !!query.select?.length) {
                 result += nlIndent + '<span class="sql-keyword">GROUP BY</span> ' + query.select!
