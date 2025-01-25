@@ -49,6 +49,7 @@ jobs:
           directory: 'build'
           add_suffix: false
           exclusions: |-
+            .*custom\.css
             .*tables\.js
             .*\.html
 
