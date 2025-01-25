@@ -39,6 +39,7 @@ jobs:
           cp project/build.js       build/build.js
           cp project/custom.css     build/custom.css
           cp project/generator.html build/generator.html
+          cp project/style.css      build/style.css
           cp project/tables.js      build/tables.js
 
       # https://github.com/devatherock/minify-js
@@ -62,6 +63,15 @@ jobs:
             i <script>
             r build/build.js
             a </script>
+            d
+          }' build/generator.html
+
+      - name: Inline style.css into generator.html
+        run: |
+          sed -i '/<link rel="stylesheet" href="style\.css"\/>/{
+            i <style>
+            r build/style.css
+            a </style>
             d
           }' build/generator.html
 
