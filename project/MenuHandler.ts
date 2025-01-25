@@ -256,7 +256,7 @@ namespace QB {
                 const sourceTableCssClasses = 'rc-source' + this.getCustomClassSuffix(ref.sourceTable);
                 const sourceNameAddition = !!ref.sourceTableAlias ? ` (${ref.sourceTableAlias})` : '';
                 const targetNameAddition = !!ref.joinVariantName ? ` (${ref.joinVariantName})` : '';
-                spanWithTableColumn.innerHTML = ` <b class="${sourceTableCssClasses}">${ref.sourceTable}</b>.${ref.sourceColumn} ${sourceNameAddition}`
+                spanWithTableColumn.innerHTML = ` <span class="${sourceTableCssClasses}">${ref.sourceTable}</span>.${ref.sourceColumn} ${sourceNameAddition}`
                     + ` &rarr; <span class="${targetTableCssClasses}">${ref.targetTable}</span>.${ref.targetColumn} ${targetNameAddition}`;
                 li.append(spanWithTableColumn);
 

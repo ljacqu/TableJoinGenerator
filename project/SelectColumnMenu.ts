@@ -49,8 +49,12 @@ namespace QB {
 
             const includeTableName = tables.length > 1;
             const ul = DocElemHelper.newElemWithClass('ul', 'column-select');
+            let previousTable = '';
             columns.forEach(col => {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
+                if (previousTable && previousTable !== col.table) {
+                    li.classList.add('separator');
+                }
                 const tableStyle = TableDefinitions.getStyle(col.table);
                 let tablePrefix = '';
                 if (includeTableName) {
@@ -70,6 +74,7 @@ namespace QB {
                 }
                 li.addEventListener('click', () => this.toggleColumnActive(li, title));
                 ul.append(li);
+                previousTable = col.table;
             });
 
             div.append(title);
