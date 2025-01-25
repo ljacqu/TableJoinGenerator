@@ -9,7 +9,7 @@
 }
 
 .columns .red, .column-select .red {
-    font-weight: bold;
+    color: #600;
 }
 .columns .primary {
     color: #030;
