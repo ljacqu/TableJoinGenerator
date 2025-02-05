@@ -15,7 +15,7 @@ namespace QB {
             this.pastColumns.add({table: table, column: ''});
         }
 
-        selectTableWithFilter(table: string, column: string, filter: string): void {
+        selectTableWithFilter(table: string, column: string, filter: string | QueryWhereFilter): void {
             this.query = {
                 table,
                 where: [{ column, filter }]
@@ -23,7 +23,7 @@ namespace QB {
             this.pastColumns.add({table, column});
         }
 
-        addFilterToSubQuery(column: string, filter: string): void {
+        addFilterToSubQuery(column: string, filter: string | QueryWhereFilter): void {
             if (!this.query?.sub) {
                 throw new Error('Expect subquery to be set!');
             }
@@ -160,8 +160,13 @@ namespace QB {
 
     export type QueryWhere = {
         column: string;
-        filter: string;
+        filter: string | QueryWhereFilter;
     };
+
+    export type QueryWhereFilter = {
+        type: string;
+        value: string;
+    }
 
     export type QueryLeftJoin = {
         sourceTable:  string;

@@ -3,7 +3,7 @@ namespace QB {
     export class Formatter {
 
         constructor(private sqlTypeHandler: SqlTypeHandler,
-                    private aliasFn: Function,
+                    private aliasFn: (tableName: string) => string | null | undefined,
                     private schema?: string) {
         }
 
@@ -92,8 +92,12 @@ namespace QB {
                         result += ' <span class="sql-keyword">IS NULL</span>';
                     } else if (where.filter === '!') {
                         result += ' <span class="sql-keyword">IS NOT NULL</span>';
-                    } else {
-                        result += ' = ' + this.sqlTypeHandler.formatValueForWhereClause(where.filter, query.table, where.column);
+                    } else if (typeof where.filter === 'string') { // where.filter is string
+                        result += ' = ' + this.sqlTypeHandler.formatValueForWhereClause(
+                            where.filter, query.table, where.column);
+                    } else { // where.filter is QueryWhereFilter
+                        result += ' ' + this.sqlTypeHandler.formatFilterForWhereClause(
+                            where.filter, query.table, where.column);
                     }
 
                     isAdditionalFilter = true;
