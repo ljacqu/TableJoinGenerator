@@ -2,6 +2,9 @@ namespace QB {
 
     export class SqlTypeHandler {
 
+        constructor(private dbEngine: string) {
+        }
+
         formatValueForWhereClause(value: string, table: string, column: string): string {
             const columnType = TableDefinitions.getColumnType(table, column);
             switch (columnType) {
@@ -17,7 +20,20 @@ namespace QB {
             }
         }
 
-        validateColumnFilterElem(table: string, column: string, value: string | null): void {
+        formatFilterForWhereClause(filter: QueryWhereFilter, table: string, column: string): string {
+            if (filter.type === 'datetime_interval') {
+                return filter.value
+                    .replaceAll('INTERVAL', '<span class="sql-keyword">INTERVAL</span>');
+            }
+
+            throw new Error('Unsupported filter of type: ' + filter.type);
+        }
+
+        validateColumnFilterElem(table: string, column: string, value: string): string | QueryWhereFilter {
+            if (value === '' || value === '!') {
+                return value;
+            }
+
             let columnType = TableDefinitions.getColumnType(table, column);
             if (columnType.startsWith('timestamp')) {
                 columnType = 'timestamp';
@@ -31,16 +47,51 @@ namespace QB {
                     if (value && value !== '!' && Number.isNaN(Number(value))) {
                         throw new Error('Invalid number');
                     }
-                    break;
-                case 'varchar':
-                case 'varchar2':
+                    return value;
                 case 'timestamp':
                 case 'datetime':
+                    return this.handleDateTimeValue(value);
+                case 'varchar':
+                case 'varchar2':
                 case 'blob':
                 case 'clob':
-                    break;
+                    return value;
                 default:
                     console.log(`Unhandled validation for ${columnType}`);
+                    return value;
+            }
+        }
+
+        private handleDateTimeValue(value: string): string | QueryWhereFilter {
+            const pattern = /([+\-])\s?(\d+)\s?([smhdy])/;
+            const matches = value.match(pattern);
+            if (matches) {
+                const operator = matches[1] === '+' ? '<' : '>';
+                const number = matches[2];
+                const unit = this.convertDateTimeUnit(matches[3]);
+
+                const expression = this.dbEngine === 'MySQL'
+                    ? `NOW() - INTERVAL ${number} ${unit}`
+                    : `sysdate - INTERVAL '${number}' ${unit}`; // Oracle
+
+                return {
+                    type: 'datetime_interval',
+                    value: operator + ' ' + expression
+                };
+            }
+
+            throw Error('Invalid timestamp expression');
+        }
+
+        private convertDateTimeUnit(unit: string): string {
+            switch (unit) {
+                case 's': return 'SECOND';
+                case 'm': return 'MINUTE';
+                case 'h': return 'HOUR';
+                case 'd': return 'DAY';
+                case 'y': return 'YEAR';
+                default:
+                    throw new Error(`Unhandled unit: ${unit}`);
             }
         }
 

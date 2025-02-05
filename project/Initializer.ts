@@ -6,12 +6,12 @@ namespace QB {
         }
 
         static init(__version: string, __tables: any, __aliasFn: any, __schema: string,
-                    __debug: boolean, __showWhereInButton: boolean): void {
+                    __dbEngine: string, __debug: boolean, __showWhereInButton: boolean): void {
 
             TableDefinitions.init(__tables);
             
             // Create all members
-            const sqlTypeHandler = new SqlTypeHandler();
+            const sqlTypeHandler = new SqlTypeHandler(__dbEngine);
             const formatter = new Formatter(sqlTypeHandler, __aliasFn, __schema);
             const query = new QueryState();
             const aggregateButton = new AggregateButton(DocElemHelper.getElementById('btn_agg'));

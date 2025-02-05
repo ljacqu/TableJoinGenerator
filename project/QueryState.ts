@@ -15,20 +15,21 @@ namespace QB {
             this.pastColumns.add({table: table, column: ''});
         }
 
-        selectTableWithFilter(table: string, column: string, filter: string): void {
+        selectTableWithFilter(table: string, column: string, filter: string | QueryWhereFilter): void {
             this.query = {
                 table,
-                where: { column, filter }
+                where: [{ column, filter }]
             };
             this.pastColumns.add({table, column});
         }
 
-        addFilterToSubQuery(column: string, filter: string): void {
+        addFilterToSubQuery(column: string, filter: string | QueryWhereFilter): void {
             if (!this.query?.sub) {
                 throw new Error('Expect subquery to be set!');
             }
 
-            this.query.sub.where = { column, filter };
+            this.query.sub.where = this.query.sub.where ?? [];
+            this.query.sub.where.push({ column, filter });
             this.pastColumns.add({
                 table: this.query.sub.table,
                 column: column
@@ -148,7 +149,7 @@ namespace QB {
         /** Tables to left join. */
         leftJoin?: QueryLeftJoin[];
         /** Column filters. */
-        where?: QueryWhere;
+        where?: QueryWhere[];
         /** Column the subquery relates to -- (WHERE ${subqueryFilterColumn} IN (${sub}) */
         subqueryFilterColumn?: string;
         /** Subquery. */
@@ -159,8 +160,13 @@ namespace QB {
 
     export type QueryWhere = {
         column: string;
-        filter: string;
+        filter: string | QueryWhereFilter;
     };
+
+    export type QueryWhereFilter = {
+        type: string;
+        value: string;
+    }
 
     export type QueryLeftJoin = {
         sourceTable:  string;

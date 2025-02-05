@@ -29,6 +29,7 @@
 // Configuration
 // -------------
 
+const __dbEngine = 'MySQL';
 const __schema = 'nightbot_quiz';
 const __aliasFn = function (tableName) {
     return __tables[tableName].alias;
@@ -47,7 +48,7 @@ const __showWhereInButton = true;
 // -------------
 
 const __version = 'local';
-QB.Initializer.init(__version, __tables, __aliasFn, __schema, __debug, __showWhereInButton);
+QB.Initializer.init(__version, __tables, __aliasFn, __schema, __dbEngine, __debug, __showWhereInButton);
 
 </script>
 </body>
