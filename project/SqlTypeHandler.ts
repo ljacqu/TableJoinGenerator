@@ -2,6 +2,9 @@ namespace QB {
 
     export class SqlTypeHandler {
 
+        constructor(private dbEngine: string) {
+        }
+
         formatValueForWhereClause(value: string, table: string, column: string): string {
             const columnType = TableDefinitions.getColumnType(table, column);
             switch (columnType) {
@@ -67,9 +70,13 @@ namespace QB {
                 const number = matches[2];
                 const unit = this.convertDateTimeUnit(matches[3]);
 
+                const expression = this.dbEngine === 'MySQL'
+                    ? `NOW() - INTERVAL ${number} ${unit}`
+                    : `sysdate - INTERVAL '${number}' ${unit}`; // Oracle
+
                 return {
                     type: 'datetime_interval',
-                    value: operator + ` sysdate - INTERVAL '${number}' ${unit}`
+                    value: operator + ' ' + expression
                 };
             }
 
