@@ -87,14 +87,8 @@ namespace QB {
                     } else {
                         result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
                     }
-                    result += this.formatColumn(query.table, where.column, useColNameWithTable);
-                    if (!where.value) {
-                        result += ' <span class="sql-keyword">IS NULL</span>';
-                    } else if (where.value === '!') {
-                        result += ' <span class="sql-keyword">IS NOT NULL</span>';
-                    } else {
-                        result += ' ' + this.sqlTypeHandler.formatFilterForWhereClause(query.table, where);
-                    }
+                    result += this.formatColumn(query.table, where.column, useColNameWithTable)
+                        + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(query.table, where);
 
                     isAdditionalFilter = true;
                 });

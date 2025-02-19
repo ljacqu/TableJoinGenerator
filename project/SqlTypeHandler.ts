@@ -9,8 +9,10 @@ namespace QB {
             switch (filter.type) {
                 case ColumnFilterType.PLAIN:
                     return this.formatValueForWhereClause(table, filter);
+                case ColumnFilterType.NULL_FILTER:
+                    return this.formatNullFilterForWhereClause(filter);
                 case ColumnFilterType.TIMESTAMP_INTERVAL:
-                    return this.formatIntervalFilterForWhereClause(table, filter);
+                    return this.formatIntervalFilterForWhereClause(filter);
                 default:
                     throw new Error('Unhandled filter type: ' + filter.type);
             }
@@ -31,14 +33,20 @@ namespace QB {
             }
         }
 
-        private formatIntervalFilterForWhereClause(table: string, filter: ColumnFilter): string {
+        private formatIntervalFilterForWhereClause(filter: ColumnFilter): string {
             return filter.value
                 .replaceAll('INTERVAL', '<span class="sql-keyword">INTERVAL</span>');
         }
 
+        private formatNullFilterForWhereClause(filter: ColumnFilter): string {
+            return filter.value
+                ? '<span class="sql-keyword">IS NOT NULL</span>'
+                : '<span class="sql-keyword">IS NULL</span>';
+        }
+
         validateColumnFilterElem(table: string, column: string, value: string): ColumnFilter {
             if (value === '' || value === '!') {
-                return ColumnFilter.plainFilter(column, value);
+                return new ColumnFilter(column, ColumnFilterType.NULL_FILTER, value);
             }
 
             let columnType = TableDefinitions.getColumnType(table, column);
@@ -72,7 +80,7 @@ namespace QB {
         private handleDateTimeValue(column: string, value: string): ColumnFilter {
             // Match stuff like "> 3d" or "<= -5h", or shorthand "+2h" / "-50s"
             // Groups: (>)? (-)? (3) (h)
-            const pattern = /^(>|>=|=|<=|<)?\s*([+\-])?\s*(\d+)\s*([smhdy])$/;
+            const pattern = /^(>|>=|=|<=|<|<>)?\s*([+\-])?\s*(\d+)\s*([smhdy])$/;
             const matches = value.trim().match(pattern);
             if (matches) {
                 const operator = matches[2] ?? '+';
