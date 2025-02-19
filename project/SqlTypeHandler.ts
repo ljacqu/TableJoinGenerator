@@ -25,9 +25,9 @@ namespace QB {
                 case 'tinyint':
                 case 'decimal':
                 case 'number':
-                    return `<span class="sql-number">${filter.value}</span>`;
+                    return `= <span class="sql-number">${filter.value}</span>`;
                 default: // quote by default
-                    return `<span class="sql-text">'`
+                    return `= <span class="sql-text">'`
                         + this.escapeValueForSqlAndHtml(filter.value)
                         + `'</span>`;
             }
