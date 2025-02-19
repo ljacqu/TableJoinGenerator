@@ -28,6 +28,13 @@ T_GHI,DEF_ID,T_DEF,ID
 
 </textarea>
 
+<h2>Existing configuration</h2>
+If you already have a table configuration, paste the whole JSON structure
+in here to keep custom values (aliases, styles and custom references).
+<br /><textarea id="old_config" rows="10" cols="70">
+
+</textarea>
+
 <br />
 <input type="submit" value="Generate" onclick="generate()" />
 <h2>Result</h2>
@@ -37,14 +44,26 @@ T_GHI,DEF_ID,T_DEF,ID
 <script>
     function generate() {
         const result = document.getElementById('result');
+        let table = null;
         try {
-            const table = generateTableData();
+            table = generateTableData();
             populateReferences(table);
-            result.innerText = 'const __tables = ' + JSON.stringify(table) + ';';
         } catch (e) {
             console.error(e);
             result.innerText = 'Error: ' + e.message;
+            return;
         }
+
+        try {
+            const oldConfig = loadOldConfig();
+            addValuesFromOldData(table, oldConfig);
+        } catch (e) {
+            console.error('Old config: ', e);
+            result.innerText = 'Error processing old config: ' + e.message;
+            return;
+        }
+
+        result.innerText = 'const __tables = ' + JSON.stringify(table) + ';';
     }
 
     function generateTableData() {
@@ -107,6 +126,60 @@ T_GHI,DEF_ID,T_DEF,ID
                 column: childColumn
             }];
         });
+    }
+
+    function loadOldConfig() {
+        let oldConfigText = document.getElementById('old_config').value.trim();
+        if (oldConfigText.startsWith('const __tables = ')) {
+            oldConfigText = oldConfigText.substring('const __tables = '.length);
+        }
+        if (oldConfigText.endsWith(';')) {
+            oldConfigText = oldConfigText.substring(0, oldConfigText.length - 1);
+        }
+        try {
+            return oldConfigText ? JSON.parse(oldConfigText) : {};
+        } catch (e) {
+            throw new Error('Error processing old config: ' + e.message);
+        }
+    }
+
+    function addValuesFromOldData(tableData, oldConfig) {
+        for (const tableName in oldConfig) {
+            const tableEntry = tableData[tableName];
+            if (tableEntry) {
+                const oldTableEntry = oldConfig[tableName];
+                tableEntry.style = oldTableEntry.style ?? {};
+                tableEntry.alias = oldTableEntry.alias ?? '';
+
+                Object.entries(oldTableEntry.references).forEach(([sourceColumn, oldReferences]) => {
+                    if (tableEntry.columns[sourceColumn]) {
+                        oldReferences.forEach(oldReference => {
+                            const referenceStillExists = tableData[oldReference.table]
+                                && tableData[oldReference.table].columns[oldReference.column];
+                            if (referenceStillExists) {
+                                if (!tableEntry.references[sourceColumn]) {
+                                    tableEntry.references[sourceColumn] = [];
+                                }
+                                const curEntry = tableEntry.references[sourceColumn]
+                                    .find(ref => ref.table === oldReference.table && ref.column === oldReference.column);
+                                if (!curEntry) {
+                                    tableEntry.references[sourceColumn].push(oldReference);
+                                } else if (oldReference.joinVariants) {
+                                    curEntry.joinVariants = oldReference.joinVariants;
+                                }
+                            } else {
+                                console.log('old config: Skip reference ' + tableName + '.' + sourceColumn
+                                    + ' to ' + oldReference.table + '.' + oldReference.column);
+                            }
+                        });
+                    } else {
+                        console.log('old config: Skip references from ' + tableName + '.' + sourceColumn);
+                    }
+                });
+            } else {
+                console.log('old config: Skip table ' + tableName);
+            }
+        }
     }
 
 </script>
