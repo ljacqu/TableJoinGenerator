@@ -70,18 +70,21 @@ namespace QB {
         }
 
         private handleDateTimeValue(column: string, value: string): ColumnFilter {
-            const pattern = /([+\-])\s?(\d+)\s?([smhdy])/;
-            const matches = value.match(pattern);
+            // Match stuff like "> 3d" or "<= -5h", or shorthand "+2h" / "-50s"
+            // Groups: (>)? (-)? (3) (h)
+            const pattern = /^(>|>=|=|<=|<)?\s*([+\-])?\s*(\d+)\s*([smhdy])$/;
+            const matches = value.trim().match(pattern);
             if (matches) {
-                const operator = matches[1] === '+' ? '<' : '>';
-                const number = matches[2];
-                const unit = this.convertDateTimeUnit(matches[3]);
+                const operator = matches[2] ?? '+';
+                const comparison = matches[1] ?? (operator === '+' ? '<' : '>');
+                const number = matches[3];
+                const unit = this.convertDateTimeUnit(matches[4]);
 
                 const expression = this.dbEngine === 'MySQL'
-                    ? `NOW() - INTERVAL ${number} ${unit}`
-                    : `sysdate - INTERVAL '${number}' ${unit}`; // Oracle
+                    ? `${comparison} NOW() ${operator} INTERVAL ${number} ${unit}`
+                    : `${comparison} sysdate ${operator} INTERVAL '${number}' ${unit}`; // Oracle
 
-                return new ColumnFilter(column, ColumnFilterType.TIMESTAMP_INTERVAL, operator + ' ' + expression);
+                return new ColumnFilter(column, ColumnFilterType.TIMESTAMP_INTERVAL, expression);
             }
 
             throw Error('Invalid timestamp expression');
