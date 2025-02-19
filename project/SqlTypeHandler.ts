@@ -5,10 +5,10 @@ namespace QB {
         constructor(private dbEngine: string) {
         }
 
-        formatFilterForWhereClause(table: string, filter: ColumnFilter): string {
+        formatFilterForWhereClause(filter: ColumnFilter): string {
             switch (filter.type) {
                 case ColumnFilterType.PLAIN:
-                    return this.formatValueForWhereClause(table, filter);
+                    return this.formatValueForWhereClause(filter);
                 case ColumnFilterType.NULL_FILTER:
                     return this.formatNullFilterForWhereClause(filter);
                 case ColumnFilterType.TIMESTAMP_INTERVAL:
@@ -18,8 +18,8 @@ namespace QB {
             }
         }
 
-        private formatValueForWhereClause(table: string, filter: ColumnFilter): string {
-            const columnType = TableDefinitions.getColumnType(table, filter.column);
+        private formatValueForWhereClause(filter: ColumnFilter): string {
+            const columnType = TableDefinitions.getColumnType(filter.table, filter.column);
             switch (columnType) {
                 case 'int':
                 case 'tinyint':
@@ -46,7 +46,7 @@ namespace QB {
 
         validateColumnFilterElem(table: string, column: string, value: string): ColumnFilter {
             if (value === '' || value === '!') {
-                return new ColumnFilter(column, ColumnFilterType.NULL_FILTER, value);
+                return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value);
             }
 
             let columnType = TableDefinitions.getColumnType(table, column);
@@ -62,22 +62,22 @@ namespace QB {
                     if (value && value !== '!' && Number.isNaN(Number(value))) {
                         throw new Error('Invalid number');
                     }
-                    return ColumnFilter.plainFilter(column, value);
+                    return ColumnFilter.plainFilter(table, column, value);
                 case 'timestamp':
                 case 'datetime':
-                    return this.handleDateTimeValue(column, value);
+                    return this.handleDateTimeValue(table, column, value);
                 case 'varchar':
                 case 'varchar2':
                 case 'blob':
                 case 'clob':
-                    return ColumnFilter.plainFilter(column, value);
+                    return ColumnFilter.plainFilter(table, column, value);
                 default:
                     console.log(`Unhandled validation for ${columnType}`);
-                    return ColumnFilter.plainFilter(column, value);
+                    return ColumnFilter.plainFilter(table, column, value);
             }
         }
 
-        private handleDateTimeValue(column: string, value: string): ColumnFilter {
+        private handleDateTimeValue(table: string, column: string, value: string): ColumnFilter {
             // Match stuff like "> 3d" or "<= -5h", or shorthand "+2h" / "-50s"
             // Groups: (>)? (-)? (3) (h)
             const pattern = /^(>|>=|=|<=|<|<>)?\s*([+\-])?\s*(\d+)\s*([smhdy])$/;
@@ -92,7 +92,7 @@ namespace QB {
                     ? `${comparison} NOW() ${operator} INTERVAL ${number} ${unit}`
                     : `${comparison} sysdate ${operator} INTERVAL '${number}' ${unit}`; // Oracle
 
-                return new ColumnFilter(column, ColumnFilterType.TIMESTAMP_INTERVAL, expression);
+                return new ColumnFilter(table, column, ColumnFilterType.TIMESTAMP_INTERVAL, expression);
             }
 
             throw Error('Invalid timestamp expression');

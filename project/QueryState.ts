@@ -160,13 +160,14 @@ namespace QB {
 
     export class ColumnFilter {
 
-        constructor(public column: string,
+        constructor(public table: string,
+                    public column: string,
                     public type: ColumnFilterType,
                     public value: string) {
         }
 
-        static plainFilter(column: string, value: string): ColumnFilter {
-            return new ColumnFilter(column, ColumnFilterType.PLAIN, value);
+        static plainFilter(table: string, column: string, value: string): ColumnFilter {
+            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value);
         }
     }
 
