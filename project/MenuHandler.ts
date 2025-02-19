@@ -105,9 +105,9 @@ namespace QB {
             inputElem.type = 'text';
 
             const onSubmitFilter = () => {
-                let value: string | QueryWhereFilter = '';
+                let filter: ColumnFilter;
                 try {
-                    value = this.sqlTypeHandler.validateColumnFilterElem(table, column, inputElem.value);
+                    filter = this.sqlTypeHandler.validateColumnFilterElem(table, column, inputElem.value);
                 } catch (e: any) {
                     window.alert(e.message);
                     return;
@@ -115,9 +115,9 @@ namespace QB {
 
                 this.queryService.updateQuery(query => {
                     if (forSubQuery) {
-                        query.addFilterToSubQuery(column, value);
+                        query.addFilterToSubQuery(filter);
                     } else {
-                        query.selectTableWithFilter(table, column, value);
+                        query.selectTableWithFilter(table, filter);
                     }
 
                     this.showRelatedColumns(forSubQuery ? query.getCurrentSelectedTable() : table);

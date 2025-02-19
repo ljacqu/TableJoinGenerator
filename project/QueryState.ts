@@ -15,24 +15,24 @@ namespace QB {
             this.pastColumns.add({table: table, column: ''});
         }
 
-        selectTableWithFilter(table: string, column: string, filter: string | QueryWhereFilter): void {
+        selectTableWithFilter(table: string, filter: ColumnFilter): void {
             this.query = {
                 table,
-                where: [{ column, filter }]
+                where: [filter]
             };
-            this.pastColumns.add({table, column});
+            this.pastColumns.add({table: table, column: filter.column});
         }
 
-        addFilterToSubQuery(column: string, filter: string | QueryWhereFilter): void {
+        addFilterToSubQuery(filter: ColumnFilter): void {
             if (!this.query?.sub) {
                 throw new Error('Expect subquery to be set!');
             }
 
             this.query.sub.where = this.query.sub.where ?? [];
-            this.query.sub.where.push({ column, filter });
+            this.query.sub.where.push(filter);
             this.pastColumns.add({
                 table: this.query.sub.table,
-                column: column
+                column: filter.column
             });
         }
 
@@ -149,7 +149,7 @@ namespace QB {
         /** Tables to left join. */
         leftJoin?: QueryLeftJoin[];
         /** Column filters. */
-        where?: QueryWhere[];
+        where?: ColumnFilter[];
         /** Column the subquery relates to -- (WHERE ${subqueryFilterColumn} IN (${sub}) */
         subqueryFilterColumn?: string;
         /** Subquery. */
@@ -158,14 +158,21 @@ namespace QB {
         aggregate?: boolean;
     };
 
-    export type QueryWhere = {
-        column: string;
-        filter: string | QueryWhereFilter;
-    };
+    export class ColumnFilter {
 
-    export type QueryWhereFilter = {
-        type: string;
-        value: string;
+        constructor(public column: string,
+                    public type: ColumnFilterType,
+                    public value: string) {
+        }
+
+        static plainFilter(column: string, value: string): ColumnFilter {
+            return new ColumnFilter(column, ColumnFilterType.PLAIN, value);
+        }
+    }
+
+    export enum ColumnFilterType {
+        PLAIN,
+        TIMESTAMP_INTERVAL
     }
 
     export type QueryLeftJoin = {
