@@ -44,7 +44,16 @@ namespace QB {
                 : '<span class="sql-keyword">IS NULL</span>';
         }
 
-        validateColumnFilterElem(table: string, column: string, value: string): ColumnFilter {
+        validateColumnFilterElemOrAlertError(table: string, column: string, value: string): ColumnFilter | null {
+            try {
+                return this.validateColumnFilterElem(table, column, value);
+            } catch (e: any) {
+                window.alert(e.message);
+                return null;
+            }
+        }
+
+        private validateColumnFilterElem(table: string, column: string, value: string): ColumnFilter {
             if (value === '' || value === '!') {
                 return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value);
             }

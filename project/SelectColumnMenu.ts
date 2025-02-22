@@ -4,7 +4,8 @@ namespace QB {
 
         private isExpanded: boolean = false;
 
-        constructor(private queryService: QueryService) {
+        constructor(private queryService: QueryService,
+                    private sqlTypeHandler: SqlTypeHandler) {
         }
 
         generateColumnsButtonOrList(forceShowButton?: boolean): HTMLElement {
@@ -51,7 +52,7 @@ namespace QB {
             const ul = DocElemHelper.newElemWithClass('ul', 'column-select');
             let previousTable = '';
             columns.forEach(col => {
-                const li = DocElemHelper.newElemWithClass('li', 'clicky');
+                const li = document.createElement('li');
                 if (previousTable && previousTable !== col.table) {
                     li.classList.add('separator');
                 }
@@ -61,8 +62,28 @@ namespace QB {
                     const tableClass = tableStyle.table ?? '';
                     tablePrefix = `<span class="tbl ${tableClass}">${col.table}</span>.`;
                 }
+
+                const filterButton = DocElemHelper.newElemWithClass('button', 'filter');
+                filterButton.innerText = '🜄';
+                filterButton.addEventListener('click', () => {
+                    this.createColumnFilterElem(li, value => {
+                        const filter =
+                            this.sqlTypeHandler.validateColumnFilterElemOrAlertError(col.table, col.column, value);
+
+                        if (filter !== null) {
+                            this.queryService.updateQuery(query => {
+                                query.addFilter(filter);
+                            });
+                            for (const elem of document.querySelectorAll('.where_input')) {
+                                elem.remove();
+                            }
+                        }
+                    });
+                });
+
+                const spanColumnWrapper = DocElemHelper.newElemWithClass('span', 'clicky');
                 const columnClass = tableStyle[col.column] ?? '';
-                li.innerHTML = tablePrefix + `<span class="col ${columnClass}">${col.column}</span>`
+                spanColumnWrapper.innerHTML = tablePrefix + `<span class="col ${columnClass}">${col.column}</span>`
                     + (col.manualAlias ? ` (${col.manualAlias})` : '');
                 li.dataset.table = col.table;
                 li.dataset.column = col.column;
@@ -72,7 +93,8 @@ namespace QB {
                 if (col.active) {
                     li.classList.add('active-column');
                 }
-                li.addEventListener('click', () => this.toggleColumnActive(li, title));
+                li.append(filterButton, document.createTextNode(' '), spanColumnWrapper);
+                spanColumnWrapper.addEventListener('click', () => this.toggleColumnActive(li, title));
                 ul.append(li);
                 previousTable = col.table;
             });
@@ -108,6 +130,28 @@ namespace QB {
                     title.classList.add('clicky');
                 }
             });
+        }
+
+        createColumnFilterElem(colElem: HTMLElement, processFilterValueFn: (value: string) => void): void {
+            for (const elem of document.querySelectorAll('.where_input')) {
+                elem.remove();
+            }
+
+            const inputElem = DocElemHelper.newElemWithClass('input', 'where_input') as HTMLInputElement;
+            inputElem.type = 'text';
+            inputElem.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    processFilterValueFn(inputElem.value);
+                }
+            });
+            colElem.after(inputElem);
+
+            const okBtn = DocElemHelper.newElemWithClass('button', 'where_input');
+            okBtn.innerText = 'Go';
+            okBtn.addEventListener('click', () => {
+                processFilterValueFn(inputElem.value);
+            });
+            inputElem.after(okBtn);
         }
     }
 }

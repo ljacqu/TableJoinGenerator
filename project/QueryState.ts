@@ -23,6 +23,16 @@ namespace QB {
             this.pastColumns.add({table: table, column: filter.column});
         }
 
+        addFilter(filter: ColumnFilter): void {
+            if (!this.query) {
+                throw new Error('Expected query to be set');
+            }
+            if (!this.query.where) {
+                this.query.where = [];
+            }
+            this.query.where.push(filter);
+        }
+
         addFilterToSubQuery(filter: ColumnFilter): void {
             if (!this.query?.sub) {
                 throw new Error('Expect subquery to be set!');
