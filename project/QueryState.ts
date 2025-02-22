@@ -23,6 +23,16 @@ namespace QB {
             this.pastColumns.add({table: table, column: filter.column});
         }
 
+        addFilter(filter: ColumnFilter): void {
+            if (!this.query) {
+                throw new Error('Expected query to be set');
+            }
+            if (!this.query.where) {
+                this.query.where = [];
+            }
+            this.query.where.push(filter);
+        }
+
         addFilterToSubQuery(filter: ColumnFilter): void {
             if (!this.query?.sub) {
                 throw new Error('Expect subquery to be set!');
@@ -160,13 +170,15 @@ namespace QB {
 
     export class ColumnFilter {
 
-        constructor(public column: string,
+        constructor(public table: string,
+                    public column: string,
                     public type: ColumnFilterType,
-                    public value: string) {
+                    public value: string,
+                    public tableAlias?: string) {
         }
 
-        static plainFilter(column: string, value: string): ColumnFilter {
-            return new ColumnFilter(column, ColumnFilterType.PLAIN, value);
+        static plainFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
+            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, tableAlias);
         }
     }
 

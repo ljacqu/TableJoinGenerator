@@ -16,7 +16,7 @@ namespace QB {
             const query = new QueryState();
             const aggregateButton = new AggregateButton(DocElemHelper.getElementById('btn_agg'));
             const queryService = new QueryService(query, formatter, __debug, __showWhereInButton);
-            const selectColumnMenu = new SelectColumnMenu(queryService);
+            const selectColumnMenu = new SelectColumnMenu(queryService, sqlTypeHandler);
             const menuHandler = new MenuHandler(DocElemHelper.getElementById('tables'),
                 aggregateButton, queryService, sqlTypeHandler, selectColumnMenu);
 

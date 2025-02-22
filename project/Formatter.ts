@@ -81,14 +81,14 @@ namespace QB {
 
             if (query.where) {
                 let isAdditionalFilter = !!query.subqueryFilterColumn; // already have a `WHERE`, so continue with `AND`
-                query.where.forEach(where => {
+                query.where.forEach(filter => {
                     if (isAdditionalFilter) {
                         result += nlIndent + '  <span class="sql-keyword">AND</span> ';
                     } else {
                         result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
                     }
-                    result += this.formatColumn(query.table, where.column, useColNameWithTable)
-                        + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(query.table, where);
+                    result += this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
+                        + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
 
                     isAdditionalFilter = true;
                 });

@@ -59,7 +59,16 @@ namespace QB {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 const columnClass = TableDefinitions.getStyle(table)[col] ?? '';
                 li.innerHTML = `<span class="${columnClass}">${col}</span>`;
-                li.addEventListener('click', () => this.createColumnFilterElem(table, col, li, false));
+                li.addEventListener('click', () => this.selectColumnMenu.createColumnFilterElem(li, value => {
+                    const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(table, col, value);
+                    if (filter !== null) {
+                        this.queryService.updateQuery(query => {
+                            query.selectTableWithFilter(table, filter);
+                            this.showRelatedColumns(table);
+                            this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
+                        });
+                    }
+                }));
                 li.addEventListener('contextmenu', e => {
                     e.preventDefault();
                     this.queryService.updateQuery(query => {
@@ -87,57 +96,24 @@ namespace QB {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 li.innerText = col;
                 li.addEventListener('click', () => {
-                    this.createColumnFilterElem(table, col, li, true);
+                    this.selectColumnMenu.createColumnFilterElem(li, value => {
+                        const filter =
+                            this.sqlTypeHandler.validateColumnFilterElemOrAlertError(table, col, value);
+
+                        if (filter !== null) {
+                            this.queryService.updateQuery(query => {
+                                query.addFilterToSubQuery(filter);
+                                this.showRelatedColumns(query.getCurrentSelectedTable());
+                                this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(false));
+                            });
+                        }
+                    });
                 });
                 ul.append(li);
             }
 
             this.tablesContainer.append(title);
             this.tablesContainer.append(ul);
-        }
-
-        private createColumnFilterElem(table: string, column: string, colElem: HTMLElement, forSubQuery: boolean): void {
-            for (const elem of document.querySelectorAll('.where_input')) {
-                elem.remove();
-            }
-
-            const inputElem = DocElemHelper.newElemWithClass('input', 'where_input') as HTMLInputElement;
-            inputElem.type = 'text';
-
-            const onSubmitFilter = () => {
-                let filter: ColumnFilter;
-                try {
-                    filter = this.sqlTypeHandler.validateColumnFilterElem(table, column, inputElem.value);
-                } catch (e: any) {
-                    window.alert(e.message);
-                    return;
-                }
-
-                this.queryService.updateQuery(query => {
-                    if (forSubQuery) {
-                        query.addFilterToSubQuery(filter);
-                    } else {
-                        query.selectTableWithFilter(table, filter);
-                    }
-
-                    this.showRelatedColumns(forSubQuery ? query.getCurrentSelectedTable() : table);
-                    this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(!forSubQuery));
-                });
-            };
-
-            inputElem.addEventListener('keydown', event => {
-                if (event.key === 'Enter') {
-                    onSubmitFilter();
-                }
-            });
-            colElem.after(inputElem);
-
-            const okBtn = DocElemHelper.newElemWithClass('button', 'where_input');
-            okBtn.innerText = 'Go';
-            okBtn.addEventListener('click', () => {
-                onSubmitFilter();
-            });
-            inputElem.after(okBtn);
         }
 
         // Defines the CSS class name(s) when a related column is shown. You can override this function to show all
