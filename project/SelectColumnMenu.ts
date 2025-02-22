@@ -65,6 +65,7 @@ namespace QB {
 
                 const filterButton = DocElemHelper.newElemWithClass('button', 'filter');
                 filterButton.innerText = '🜄';
+                filterButton.title = 'Add filter';
                 filterButton.addEventListener('click', () => {
                     this.createColumnFilterElem(li, value => {
                         const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
