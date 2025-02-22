@@ -67,8 +67,8 @@ namespace QB {
                 filterButton.innerText = '🜄';
                 filterButton.addEventListener('click', () => {
                     this.createColumnFilterElem(li, value => {
-                        const filter =
-                            this.sqlTypeHandler.validateColumnFilterElemOrAlertError(col.table, col.column, value);
+                        const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
+                            col.table, col.column, value, col.manualAlias);
 
                         if (filter !== null) {
                             this.queryService.updateQuery(query => {

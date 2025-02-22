@@ -87,7 +87,7 @@ namespace QB {
                     } else {
                         result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
                     }
-                    result += this.formatColumn(filter.table, filter.column, useColNameWithTable)
+                    result += this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
                         + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
 
                     isAdditionalFilter = true;

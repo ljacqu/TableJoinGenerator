@@ -44,18 +44,20 @@ namespace QB {
                 : '<span class="sql-keyword">IS NULL</span>';
         }
 
-        validateColumnFilterElemOrAlertError(table: string, column: string, value: string): ColumnFilter | null {
+        validateColumnFilterElemOrAlertError(table: string, column: string, value: string,
+                                             tableAlias?: string): ColumnFilter | null {
             try {
-                return this.validateColumnFilterElem(table, column, value);
+                return this.validateColumnFilterElem(table, column, value, tableAlias);
             } catch (e: any) {
                 window.alert(e.message);
                 return null;
             }
         }
 
-        private validateColumnFilterElem(table: string, column: string, value: string): ColumnFilter {
+        private validateColumnFilterElem(table: string, column: string, value: string,
+                                         tableAlias?: string): ColumnFilter {
             if (value === '' || value === '!') {
-                return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value);
+                return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value, tableAlias);
             }
 
             let columnType = TableDefinitions.getColumnType(table, column);
@@ -71,7 +73,7 @@ namespace QB {
                     if (value && value !== '!' && Number.isNaN(Number(value))) {
                         throw new Error('Invalid number');
                     }
-                    return ColumnFilter.plainFilter(table, column, value);
+                    return ColumnFilter.plainFilter(table, column, value, tableAlias);
                 case 'timestamp':
                 case 'datetime':
                     return this.handleDateTimeValue(table, column, value);
@@ -79,10 +81,10 @@ namespace QB {
                 case 'varchar2':
                 case 'blob':
                 case 'clob':
-                    return ColumnFilter.plainFilter(table, column, value);
+                    return ColumnFilter.plainFilter(table, column, value, tableAlias);
                 default:
                     console.log(`Unhandled validation for ${columnType}`);
-                    return ColumnFilter.plainFilter(table, column, value);
+                    return ColumnFilter.plainFilter(table, column, value, tableAlias);
             }
         }
 

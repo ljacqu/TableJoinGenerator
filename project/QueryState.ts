@@ -173,11 +173,12 @@ namespace QB {
         constructor(public table: string,
                     public column: string,
                     public type: ColumnFilterType,
-                    public value: string) {
+                    public value: string,
+                    public tableAlias?: string) {
         }
 
-        static plainFilter(table: string, column: string, value: string): ColumnFilter {
-            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value);
+        static plainFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
+            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, tableAlias);
         }
     }
 
