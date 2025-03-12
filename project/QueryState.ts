@@ -101,6 +101,27 @@ namespace QB {
             this.query!.select.push({table, column, manualAlias});
         }
 
+        removeFilter(filter: ColumnFilter): void {
+            if (!this.query?.where) {
+                throw new Error('Query has no filters');
+            }
+            let foundMatch = false;
+            this.query.where = this.query.where.filter(f => {
+                // Delete only one matching filter
+                if (foundMatch) {
+                    return true;
+                }
+
+                const isMatch = f.table === filter.table && f.column === filter.column
+                    && (!f.tableAlias && !filter.tableAlias || f.tableAlias === filter.tableAlias)
+                    && f.type === filter.type && f.value === filter.value;
+                if (isMatch) {
+                    foundMatch = true;
+                }
+                return !isMatch;
+            });
+        }
+
         // ---------
         // Getters
         // ---------

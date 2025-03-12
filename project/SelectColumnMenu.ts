@@ -67,7 +67,14 @@ namespace QB {
                 filterButton.innerText = '🜄';
                 filterButton.title = 'Add filter';
                 filterButton.addEventListener('click', () => {
-                    this.createColumnFilterElem(li, value => {
+                    const isAlreadyOpen = li.querySelector('ul') !== null;
+                    this.deleteAllWhereInputElements();
+                    if (isAlreadyOpen) {
+                        return;
+                    }
+
+                    const filters = this.queryService.getFilters(col.table, col.column, col.manualAlias);
+                    this.createFiltersSublist(li, filters, value => {
                         const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
                             col.table, col.column, value, col.manualAlias);
 
@@ -133,11 +140,13 @@ namespace QB {
             });
         }
 
-        createColumnFilterElem(colElem: HTMLElement, processFilterValueFn: (value: string) => void): void {
+        deleteAllWhereInputElements(): void {
             for (const elem of document.querySelectorAll('.where_input')) {
                 elem.remove();
             }
+        }
 
+        createColumnFilterElem(colElem: HTMLElement, processFilterValueFn: (value: string) => void): void {
             const inputElem = DocElemHelper.newElemWithClass('input', 'where_input') as HTMLInputElement;
             inputElem.type = 'text';
             inputElem.addEventListener('keydown', event => {
@@ -147,12 +156,58 @@ namespace QB {
             });
             colElem.after(inputElem);
 
-            const okBtn = DocElemHelper.newElemWithClass('button', 'where_input');
-            okBtn.innerText = 'Go';
-            okBtn.addEventListener('click', () => {
+            const addBtn = DocElemHelper.newElemWithClass('button', 'where_input');
+            addBtn.innerText = 'Add';
+            addBtn.addEventListener('click', () => {
                 processFilterValueFn(inputElem.value);
             });
-            inputElem.after(okBtn);
+            inputElem.after(addBtn);
+        }
+
+        private createFiltersSublist(colElem: HTMLElement, existingFilters: ColumnFilter[],
+                                     processFilterValueFn: (value: string) => void): void {
+            const ulElem = DocElemHelper.newElemWithClass('ul', 'where_input');
+            existingFilters.forEach(filter => {
+                const li = document.createElement('li');
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = filter.value;
+
+                const saveBtn = DocElemHelper.newElemWithText('button', 'Save');
+                saveBtn.addEventListener('click', () => {
+                    this.queryService.updateQuery(query => {
+                        filter.value = input.value;
+                        // TODO: Missing validation
+                    });
+                });
+                const delBtn = DocElemHelper.newElemWithText('button', 'Del');
+                delBtn.addEventListener('click', () => {
+                    this.queryService.updateQuery(query => {
+                        query.removeFilter(filter);
+                        li.remove();
+                        // TODO: Rebuild whole list
+                    });
+                });
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        saveBtn.click();
+                    }
+                });
+
+                li.append(input, saveBtn, delBtn);
+                ulElem.append(li);
+            });
+
+            // New filter
+            const li = document.createElement('li');
+            const span = document.createElement('span');
+            li.append(span);
+            this.createColumnFilterElem(span, processFilterValueFn);
+            // TODO: Rebuild whole list on add
+            ulElem.append(li);
+
+            colElem.append(ulElem);
         }
     }
 }

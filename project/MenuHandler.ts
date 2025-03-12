@@ -59,16 +59,19 @@ namespace QB {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 const columnClass = TableDefinitions.getStyle(table)[col] ?? '';
                 li.innerHTML = `<span class="${columnClass}">${col}</span>`;
-                li.addEventListener('click', () => this.selectColumnMenu.createColumnFilterElem(li, value => {
-                    const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(table, col, value);
-                    if (filter !== null) {
-                        this.queryService.updateQuery(query => {
-                            query.selectTableWithFilter(table, filter);
-                            this.showRelatedColumns(table);
-                            this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
-                        });
-                    }
-                }));
+                li.addEventListener('click', () => {
+                    this.selectColumnMenu.deleteAllWhereInputElements();
+                    this.selectColumnMenu.createColumnFilterElem(li, value => {
+                        const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(table, col, value);
+                        if (filter !== null) {
+                            this.queryService.updateQuery(query => {
+                                query.selectTableWithFilter(table, filter);
+                                this.showRelatedColumns(table);
+                                this.tablesContainer.append(this.selectColumnMenu.generateColumnsButtonOrList(true));
+                            });
+                        }
+                    });
+                });
                 li.addEventListener('contextmenu', e => {
                     e.preventDefault();
                     this.queryService.updateQuery(query => {
@@ -96,6 +99,7 @@ namespace QB {
                 const li = DocElemHelper.newElemWithClass('li', 'clicky');
                 li.innerText = col;
                 li.addEventListener('click', () => {
+                    this.selectColumnMenu.deleteAllWhereInputElements();
                     this.selectColumnMenu.createColumnFilterElem(li, value => {
                         const filter =
                             this.sqlTypeHandler.validateColumnFilterElemOrAlertError(table, col, value);
