@@ -73,8 +73,8 @@ namespace QB {
                         return;
                     }
 
-                    const filters = this.queryService.getFilters(col.table, col.column, col.manualAlias);
-                    this.createFiltersSublist(li, filters, value => {
+                    const filtersCallback = () => this.queryService.getFilters(col.table, col.column, col.manualAlias);
+                    const processFilterValueFn = (value: string) => {
                         const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
                             col.table, col.column, value, col.manualAlias);
 
@@ -82,11 +82,11 @@ namespace QB {
                             this.queryService.updateQuery(query => {
                                 query.addFilter(filter);
                             });
-                            for (const elem of document.querySelectorAll('.where_input')) {
-                                elem.remove();
-                            }
+                            this.deleteAllWhereInputElements();
+                            this.createFiltersSublist(li, filtersCallback, processFilterValueFn);
                         }
-                    });
+                    };
+                    this.createFiltersSublist(li, filtersCallback, processFilterValueFn);
                 });
 
                 const spanColumnWrapper = DocElemHelper.newElemWithClass('span', 'clicky');
@@ -164,21 +164,23 @@ namespace QB {
             inputElem.after(addBtn);
         }
 
-        private createFiltersSublist(colElem: HTMLElement, existingFilters: ColumnFilter[],
+        private createFiltersSublist(colElem: HTMLElement, filtersCallback: () => ColumnFilter[],
                                      processFilterValueFn: (value: string) => void): void {
             const ulElem = DocElemHelper.newElemWithClass('ul', 'where_input');
-            existingFilters.forEach(filter => {
+            filtersCallback().forEach(filter => {
                 const li = document.createElement('li');
 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.value = filter.value;
 
-                const saveBtn = DocElemHelper.newElemWithText('button', 'Save');
+                const saveBtn = DocElemHelper.newElemWithText('button', 'Save') as HTMLButtonElement;
                 saveBtn.addEventListener('click', () => {
                     this.queryService.updateQuery(query => {
                         filter.value = input.value;
                         // TODO: Missing validation
+                        this.deleteAllWhereInputElements();
+                        this.createFiltersSublist(colElem, filtersCallback, processFilterValueFn);
                     });
                 });
                 const delBtn = DocElemHelper.newElemWithText('button', 'Del');
@@ -186,9 +188,17 @@ namespace QB {
                     this.queryService.updateQuery(query => {
                         query.removeFilter(filter);
                         li.remove();
-                        // TODO: Rebuild whole list
+                        this.deleteAllWhereInputElements();
+                        this.createFiltersSublist(colElem, filtersCallback, processFilterValueFn);
                     });
                 });
+
+                if (filter.type === ColumnFilterType.NULL_FILTER) {
+                    input.disabled = true;
+                    input.value = (filter.value ? 'NOT NULL' : 'NULL');
+                    saveBtn.disabled = true;
+                }
+
                 input.addEventListener('keydown', event => {
                     if (event.key === 'Enter') {
                         saveBtn.click();
@@ -204,7 +214,6 @@ namespace QB {
             const span = document.createElement('span');
             li.append(span);
             this.createColumnFilterElem(span, processFilterValueFn);
-            // TODO: Rebuild whole list on add
             ulElem.append(li);
 
             colElem.append(ulElem);
