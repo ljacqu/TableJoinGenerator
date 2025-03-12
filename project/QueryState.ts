@@ -112,14 +112,31 @@ namespace QB {
                     return true;
                 }
 
-                const isMatch = f.table === filter.table && f.column === filter.column
-                    && (!f.tableAlias && !filter.tableAlias || f.tableAlias === filter.tableAlias)
-                    && f.type === filter.type && f.value === filter.value;
+                const isMatch = this.matches(filter, f);
                 if (isMatch) {
                     foundMatch = true;
                 }
                 return !isMatch;
             });
+        }
+
+        replaceFilter(oldFilter: ColumnFilter, newFilter: ColumnFilter): void {
+            if (!this.query?.where) {
+                throw new Error('Query has no filters');
+            }
+            for (let i = 0; i < this.query.where.length; ++i) {
+                if (this.matches(oldFilter, this.query.where[i])) {
+                    this.query.where[i] = newFilter;
+                    return;
+                }
+            }
+            throw new Error('Could not replace filter');
+        }
+
+        private matches(filter1: ColumnFilter, filter2: ColumnFilter): boolean {
+            return filter1.table === filter2.table && filter1.column === filter2.column
+                && (!filter1.tableAlias && !filter2.tableAlias || filter1.tableAlias === filter2.tableAlias)
+                && filter1.type === filter2.type && filter1.value === filter2.value;
         }
 
         // ---------

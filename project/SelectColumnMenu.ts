@@ -72,21 +72,7 @@ namespace QB {
                     if (isAlreadyOpen) {
                         return;
                     }
-
-                    const filtersCallback = () => this.queryService.getFilters(col.table, col.column, col.manualAlias);
-                    const processFilterValueFn = (value: string) => {
-                        const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
-                            col.table, col.column, value, col.manualAlias);
-
-                        if (filter !== null) {
-                            this.queryService.updateQuery(query => {
-                                query.addFilter(filter);
-                            });
-                            this.deleteAllWhereInputElements();
-                            this.createFiltersSublist(li, filtersCallback, processFilterValueFn);
-                        }
-                    };
-                    this.createFiltersSublist(li, filtersCallback, processFilterValueFn);
+                    this.createFiltersSublist(li, col.table, col.column, col.manualAlias);
                 });
 
                 const spanColumnWrapper = DocElemHelper.newElemWithClass('span', 'clicky');
@@ -164,10 +150,10 @@ namespace QB {
             inputElem.after(addBtn);
         }
 
-        private createFiltersSublist(colElem: HTMLElement, filtersCallback: () => ColumnFilter[],
-                                     processFilterValueFn: (value: string) => void): void {
+        private createFiltersSublist(colElem: HTMLElement, table: string, column: string, tableAlias?: string): void {
             const ulElem = DocElemHelper.newElemWithClass('ul', 'where_input');
-            filtersCallback().forEach(filter => {
+            const filters = this.queryService.getFilters(table, column, tableAlias);
+            filters.forEach(filter => {
                 const li = document.createElement('li');
 
                 const input = document.createElement('input');
@@ -176,21 +162,24 @@ namespace QB {
 
                 const saveBtn = DocElemHelper.newElemWithText('button', 'Save') as HTMLButtonElement;
                 saveBtn.addEventListener('click', () => {
-                    this.queryService.updateQuery(query => {
-                        filter.value = input.value;
-                        // TODO: Missing validation
+                    const newFilter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
+                        table, column, input.value, tableAlias);
+
+                    if (newFilter) {
+                        this.queryService.updateQuery(query => {
+                            query.replaceFilter(filter, newFilter);
+                        });
                         this.deleteAllWhereInputElements();
-                        this.createFiltersSublist(colElem, filtersCallback, processFilterValueFn);
-                    });
+                        this.createFiltersSublist(colElem, table, column, tableAlias);
+                    }
                 });
                 const delBtn = DocElemHelper.newElemWithText('button', 'Del');
                 delBtn.addEventListener('click', () => {
                     this.queryService.updateQuery(query => {
                         query.removeFilter(filter);
-                        li.remove();
-                        this.deleteAllWhereInputElements();
-                        this.createFiltersSublist(colElem, filtersCallback, processFilterValueFn);
                     });
+                    this.deleteAllWhereInputElements();
+                    this.createFiltersSublist(colElem, table, column, tableAlias);
                 });
 
                 if (filter.type === ColumnFilterType.NULL_FILTER) {
@@ -213,7 +202,19 @@ namespace QB {
             const li = document.createElement('li');
             const span = document.createElement('span');
             li.append(span);
-            this.createColumnFilterElem(span, processFilterValueFn);
+
+            this.createColumnFilterElem(span, value => {
+                const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
+                    table, column, value, tableAlias);
+
+                if (filter !== null) {
+                    this.queryService.updateQuery(query => {
+                        query.addFilter(filter);
+                    });
+                    this.deleteAllWhereInputElements();
+                    this.createFiltersSublist(li, table, column, tableAlias);
+                }
+            });
             ulElem.append(li);
 
             colElem.append(ulElem);
