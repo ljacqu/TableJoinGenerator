@@ -90,22 +90,18 @@ namespace QB {
                     }
 
                     const operator = filterGroup.operator;
-                    if (operator === 'OR') {
-                        result += '(';
-                    }
-
                     const filterDelimiter = operator === 'OR'
                       ? '    <span class="sql-keyword">OR</span> '
-                      : '  <span class="sql-keyword">AND</span> ';
+                      : '   <span class="sql-keyword">AND</span> ';
                     const sqlForFilters = filterGroup.columnFilters.map(filter => {
                         return this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
                             + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
                     }).join(nlIndent + filterDelimiter);
 
-                    result += sqlForFilters;
-
-                    if (operator === 'OR') {
-                        result += ')';
+                    if (filterGroup.columnFilters.length === 1) {
+                        result += sqlForFilters;
+                    } else {
+                        result += '(' + sqlForFilters + ')';
                     }
                     isAdditionalFilter = true;
                 });
