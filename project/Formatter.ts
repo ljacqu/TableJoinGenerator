@@ -80,16 +80,33 @@ namespace QB {
             }
 
             if (query.where) {
+                const filtersWithOperator = QueryState.inferOperatorForColumns(query.where);
                 let isAdditionalFilter = !!query.subqueryFilterColumn; // already have a `WHERE`, so continue with `AND`
-                query.where.forEach(filter => {
+                filtersWithOperator.forEach(filterGroup => {
                     if (isAdditionalFilter) {
                         result += nlIndent + '  <span class="sql-keyword">AND</span> ';
                     } else {
                         result += nlIndent + '<span class="sql-keyword">WHERE</span> ';
                     }
-                    result += this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
-                        + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
 
+                    const operator = filterGroup.operator;
+                    if (operator === 'OR') {
+                        result += '(';
+                    }
+
+                    const filterDelimiter = operator === 'OR'
+                      ? '    <span class="sql-keyword">OR</span> '
+                      : '  <span class="sql-keyword">AND</span> ';
+                    const sqlForFilters = filterGroup.columnFilters.map(filter => {
+                        return this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
+                            + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
+                    }).join(nlIndent + filterDelimiter);
+
+                    result += sqlForFilters;
+
+                    if (operator === 'OR') {
+                        result += ')';
+                    }
                     isAdditionalFilter = true;
                 });
             }

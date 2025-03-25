@@ -187,6 +187,45 @@ namespace QB {
         getPastColumns(): Set<Column> {
             return this.pastColumns;
         }
+
+        // Can't put this into QueryService because Formatter is a dependency
+        static inferOperatorForColumns(filters: ColumnFilter[]): {operator: string; columnFilters: ColumnFilter[]}[] {
+            const filtersByColumn = QueryState.groupFiltersByColumn(filters);
+
+            const filtersWithOperator = [];
+            for (const columnFilters of filtersByColumn.values()) {
+                if (columnFilters.length === 1) {
+                    filtersWithOperator.push({operator: 'AND', columnFilters});
+                } else {
+                    const operator = this.determineOperator(columnFilters);
+                    filtersWithOperator.push({operator, columnFilters});
+                }
+            }
+
+            return filtersWithOperator;
+        }
+
+        private static determineOperator(filters: ColumnFilter[]): string {
+            if (filters.length === 1) {
+                return 'AND'; // doesn't matter
+            } else if (filters.find(filter => filter.type === ColumnFilterType.NULL_FILTER
+                                                       || filter.type === ColumnFilterType.PLAIN)) {
+                return 'OR';
+            }
+            return 'AND';
+        }
+
+        private static groupFiltersByColumn(filters: ColumnFilter[]): Map<string, ColumnFilter[]> {
+            const filtersByColumn = new Map<string, ColumnFilter[]>();
+            filters.forEach(filter => {
+                const key = `${filter.table}|${filter.column}|` + (filter.tableAlias ?? '');
+                if (!filtersByColumn.has(key)) {
+                    filtersByColumn.set(key, []);
+                }
+                filtersByColumn.get(key)!.push(filter);
+            });
+            return filtersByColumn;
+        }
     }
 
     export type Query = {
