@@ -96,3 +96,6 @@ li.separator {
     border-top: 1px dashed #ccc;
     padding-top: 2px;
 }
+button.filter-has-entries {
+    color: #c70;
+}

@@ -65,6 +65,15 @@ namespace QB {
             return this.query.hasAnyColumnSelect();
         }
 
+        hasFilterOnColumn(table: string, column: string, tableAlias?: string): boolean {
+            const filters = this.query.getQuery()?.where;
+            if (filters) {
+                return filters.some(filter => filter.table === table && filter.column === column
+                    && (!tableAlias && !filter.tableAlias || tableAlias === filter.tableAlias));
+            }
+            return false;
+        }
+
         getFilters(table: string, column: string, tableAlias?: string): ColumnFilter[] {
             const filters = this.query.getQuery()?.where;
             if (filters) {
