@@ -267,7 +267,8 @@ namespace QB {
     export enum ColumnFilterType {
         PLAIN,
         TIMESTAMP_INTERVAL,
-        NULL_FILTER
+        NULL_FILTER,
+        NUMBER_COMPARISON
     }
 
     export type QueryLeftJoin = {
