@@ -251,11 +251,16 @@ namespace QB {
                     public column: string,
                     public type: ColumnFilterType,
                     public value: string,
+                    public inputValue?: string,
                     public tableAlias?: string) {
         }
 
         static plainFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
-            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, tableAlias);
+            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, undefined, tableAlias);
+        }
+
+        static nullFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
+            return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value, undefined, tableAlias);
         }
     }
 

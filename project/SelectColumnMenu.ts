@@ -65,7 +65,7 @@ namespace QB {
 
                 const filterButton = DocElemHelper.newElemWithClass('button', 'filter');
                 filterButton.innerText = '🜄';
-                filterButton.title = 'Add filter';
+                filterButton.title = 'Edit filters';
                 filterButton.addEventListener('click', () => {
                     const isAlreadyOpen = li.querySelector('ul') !== null;
                     this.deleteAllWhereInputElements();
@@ -158,7 +158,7 @@ namespace QB {
 
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.value = filter.value;
+                input.value = filter.inputValue ?? filter.value;
 
                 const saveBtn = DocElemHelper.newElemWithText('button', 'Save') as HTMLButtonElement;
                 saveBtn.addEventListener('click', () => {
@@ -212,11 +212,10 @@ namespace QB {
                         query.addFilter(filter);
                     });
                     this.deleteAllWhereInputElements();
-                    this.createFiltersSublist(li, table, column, tableAlias);
+                    this.createFiltersSublist(colElem, table, column, tableAlias);
                 }
             });
             ulElem.append(li);
-
             colElem.append(ulElem);
         }
     }
