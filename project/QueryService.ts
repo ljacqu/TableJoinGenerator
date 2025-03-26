@@ -65,6 +65,15 @@ namespace QB {
             return this.query.hasAnyColumnSelect();
         }
 
+        getFilters(table: string, column: string, tableAlias?: string): ColumnFilter[] {
+            const filters = this.query.getQuery()?.where;
+            if (filters) {
+                return filters.filter(filter => filter.table === table && filter.column === column
+                        && (!tableAlias && !filter.tableAlias || tableAlias === filter.tableAlias));
+            }
+            return [];
+        }
+
         private updateQueryOnPage() {
             DocElemHelper.getElementById('query').innerHTML = this.formatter.generateQuery(this.query.getQuery());
             if (this.configDebugEnabled) {

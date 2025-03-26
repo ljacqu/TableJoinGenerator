@@ -65,21 +65,14 @@ namespace QB {
 
                 const filterButton = DocElemHelper.newElemWithClass('button', 'filter');
                 filterButton.innerText = '🜄';
-                filterButton.title = 'Add filter';
+                filterButton.title = 'Edit filters';
                 filterButton.addEventListener('click', () => {
-                    this.createColumnFilterElem(li, value => {
-                        const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
-                            col.table, col.column, value, col.manualAlias);
-
-                        if (filter !== null) {
-                            this.queryService.updateQuery(query => {
-                                query.addFilter(filter);
-                            });
-                            for (const elem of document.querySelectorAll('.where_input')) {
-                                elem.remove();
-                            }
-                        }
-                    });
+                    const isAlreadyOpen = li.querySelector('ul') !== null;
+                    this.deleteAllWhereInputElements();
+                    if (isAlreadyOpen) {
+                        return;
+                    }
+                    this.createFiltersSublist(li, col.table, col.column, col.manualAlias);
                 });
 
                 const spanColumnWrapper = DocElemHelper.newElemWithClass('span', 'clicky');
@@ -133,11 +126,13 @@ namespace QB {
             });
         }
 
-        createColumnFilterElem(colElem: HTMLElement, processFilterValueFn: (value: string) => void): void {
+        deleteAllWhereInputElements(): void {
             for (const elem of document.querySelectorAll('.where_input')) {
                 elem.remove();
             }
+        }
 
+        createColumnFilterElem(colElem: HTMLElement, processFilterValueFn: (value: string) => void): void {
             const inputElem = DocElemHelper.newElemWithClass('input', 'where_input') as HTMLInputElement;
             inputElem.type = 'text';
             inputElem.addEventListener('keydown', event => {
@@ -147,12 +142,81 @@ namespace QB {
             });
             colElem.after(inputElem);
 
-            const okBtn = DocElemHelper.newElemWithClass('button', 'where_input');
-            okBtn.innerText = 'Go';
-            okBtn.addEventListener('click', () => {
+            const addBtn = DocElemHelper.newElemWithClass('button', 'where_input');
+            addBtn.innerText = 'Add';
+            addBtn.addEventListener('click', () => {
                 processFilterValueFn(inputElem.value);
             });
-            inputElem.after(okBtn);
+            inputElem.after(addBtn);
+        }
+
+        private createFiltersSublist(colElem: HTMLElement, table: string, column: string, tableAlias?: string): void {
+            const ulElem = DocElemHelper.newElemWithClass('ul', 'where_input');
+            const filters = this.queryService.getFilters(table, column, tableAlias);
+            filters.forEach(filter => {
+                const li = document.createElement('li');
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = filter.inputValue ?? filter.value;
+
+                const saveBtn = DocElemHelper.newElemWithText('button', 'Save') as HTMLButtonElement;
+                saveBtn.addEventListener('click', () => {
+                    const newFilter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
+                        table, column, input.value, tableAlias);
+
+                    if (newFilter) {
+                        this.queryService.updateQuery(query => {
+                            query.replaceFilter(filter, newFilter);
+                        });
+                        this.deleteAllWhereInputElements();
+                        this.createFiltersSublist(colElem, table, column, tableAlias);
+                    }
+                });
+                const delBtn = DocElemHelper.newElemWithText('button', 'Del');
+                delBtn.addEventListener('click', () => {
+                    this.queryService.updateQuery(query => {
+                        query.removeFilter(filter);
+                    });
+                    this.deleteAllWhereInputElements();
+                    this.createFiltersSublist(colElem, table, column, tableAlias);
+                });
+
+                if (filter.type === ColumnFilterType.NULL_FILTER) {
+                    input.disabled = true;
+                    input.value = (filter.value ? 'NOT NULL' : 'NULL');
+                    saveBtn.disabled = true;
+                }
+
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        saveBtn.click();
+                    }
+                });
+
+                li.append(input, saveBtn, delBtn);
+                ulElem.append(li);
+            });
+
+            // New filter
+            const li = document.createElement('li');
+            const span = document.createElement('span');
+            li.append(span);
+
+            this.createColumnFilterElem(span, value => {
+                const filter = this.sqlTypeHandler.validateColumnFilterElemOrAlertError(
+                    table, column, value, tableAlias);
+
+                if (filter !== null) {
+                    this.queryService.updateQuery(query => {
+                        query.addFilter(filter);
+                    });
+                    this.deleteAllWhereInputElements();
+                    this.createFiltersSublist(colElem, table, column, tableAlias);
+                }
+            });
+            ulElem.append(li);
+            colElem.append(ulElem);
         }
     }
 }

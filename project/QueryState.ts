@@ -101,6 +101,44 @@ namespace QB {
             this.query!.select.push({table, column, manualAlias});
         }
 
+        removeFilter(filter: ColumnFilter): void {
+            if (!this.query?.where) {
+                throw new Error('Query has no filters');
+            }
+            let foundMatch = false;
+            this.query.where = this.query.where.filter(f => {
+                // Delete only one matching filter
+                if (foundMatch) {
+                    return true;
+                }
+
+                const isMatch = this.matches(filter, f);
+                if (isMatch) {
+                    foundMatch = true;
+                }
+                return !isMatch;
+            });
+        }
+
+        replaceFilter(oldFilter: ColumnFilter, newFilter: ColumnFilter): void {
+            if (!this.query?.where) {
+                throw new Error('Query has no filters');
+            }
+            for (let i = 0; i < this.query.where.length; ++i) {
+                if (this.matches(oldFilter, this.query.where[i])) {
+                    this.query.where[i] = newFilter;
+                    return;
+                }
+            }
+            throw new Error('Could not replace filter');
+        }
+
+        private matches(filter1: ColumnFilter, filter2: ColumnFilter): boolean {
+            return filter1.table === filter2.table && filter1.column === filter2.column
+                && (!filter1.tableAlias && !filter2.tableAlias || filter1.tableAlias === filter2.tableAlias)
+                && filter1.type === filter2.type && filter1.value === filter2.value;
+        }
+
         // ---------
         // Getters
         // ---------
@@ -149,6 +187,45 @@ namespace QB {
         getPastColumns(): Set<Column> {
             return this.pastColumns;
         }
+
+        // Can't put this into QueryService because Formatter is a dependency
+        static inferOperatorForColumns(filters: ColumnFilter[]): {operator: string; columnFilters: ColumnFilter[]}[] {
+            const filtersByColumn = QueryState.groupFiltersByColumn(filters);
+
+            const filtersWithOperator = [];
+            for (const columnFilters of filtersByColumn.values()) {
+                if (columnFilters.length === 1) {
+                    filtersWithOperator.push({operator: 'AND', columnFilters});
+                } else {
+                    const operator = this.determineOperator(columnFilters);
+                    filtersWithOperator.push({operator, columnFilters});
+                }
+            }
+
+            return filtersWithOperator;
+        }
+
+        private static determineOperator(filters: ColumnFilter[]): string {
+            if (filters.length === 1) {
+                return 'AND'; // doesn't matter
+            } else if (filters.find(filter => filter.type === ColumnFilterType.NULL_FILTER
+                                                       || filter.type === ColumnFilterType.PLAIN)) {
+                return 'OR';
+            }
+            return 'AND';
+        }
+
+        private static groupFiltersByColumn(filters: ColumnFilter[]): Map<string, ColumnFilter[]> {
+            const filtersByColumn = new Map<string, ColumnFilter[]>();
+            filters.forEach(filter => {
+                const key = `${filter.table}|${filter.column}|` + (filter.tableAlias ?? '');
+                if (!filtersByColumn.has(key)) {
+                    filtersByColumn.set(key, []);
+                }
+                filtersByColumn.get(key)!.push(filter);
+            });
+            return filtersByColumn;
+        }
     }
 
     export type Query = {
@@ -174,11 +251,16 @@ namespace QB {
                     public column: string,
                     public type: ColumnFilterType,
                     public value: string,
+                    public inputValue?: string,
                     public tableAlias?: string) {
         }
 
         static plainFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
-            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, tableAlias);
+            return new ColumnFilter(table, column, ColumnFilterType.PLAIN, value, undefined, tableAlias);
+        }
+
+        static nullFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
+            return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value, undefined, tableAlias);
         }
     }
 

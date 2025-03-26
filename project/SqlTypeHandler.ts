@@ -57,7 +57,7 @@ namespace QB {
         private validateColumnFilterElem(table: string, column: string, value: string,
                                          tableAlias?: string): ColumnFilter {
             if (value === '' || value === '!') {
-                return new ColumnFilter(table, column, ColumnFilterType.NULL_FILTER, value, tableAlias);
+                return ColumnFilter.nullFilter(table, column, value, tableAlias);
             }
 
             let columnType = TableDefinitions.getColumnType(table, column);
@@ -88,7 +88,7 @@ namespace QB {
             }
         }
 
-        private handleDateTimeValue(table: string, column: string, value: string): ColumnFilter {
+        private handleDateTimeValue(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
             // Match stuff like "> 3d" or "<= -5h", or shorthand "+2h" / "-50s"
             // Groups: (>)? (-)? (3) (h)
             const pattern = /^(>|>=|=|<=|<|<>)?\s*([+\-])?\s*(\d+)\s*([smhdy])$/;
@@ -103,7 +103,8 @@ namespace QB {
                     ? `${comparison} NOW() ${operator} INTERVAL ${number} ${unit}`
                     : `${comparison} sysdate ${operator} INTERVAL '${number}' ${unit}`; // Oracle
 
-                return new ColumnFilter(table, column, ColumnFilterType.TIMESTAMP_INTERVAL, expression);
+                return new ColumnFilter(table, column, ColumnFilterType.TIMESTAMP_INTERVAL,
+                    expression, value, tableAlias);
             }
 
             throw Error('Invalid timestamp expression');
