@@ -45,16 +45,20 @@ body {
 #result {
     flex-grow: 1;
     padding: 20px;
-    font-family: Consolas, monospace;
 }
 #query {
     border: 1px solid #333;
     background-color: #eee;
     display: inline-block;
     padding: 20px;
+    font-family: Consolas, monospace;
 }
 #query:empty, #query_debug:empty {
     display: none;
+}
+#query_debug {
+    font-family: Consolas, monospace;
+    margin-top: 1em;
 }
 #tables {
     margin-bottom: 1em;
@@ -95,4 +99,17 @@ li.separator {
     margin-top: 4px;
     border-top: 1px dashed #ccc;
     padding-top: 2px;
+}
+button.filter-has-entries {
+    color: #c70;
+}
+.copy-hint {
+    opacity: 0;
+    transition: opacity 800ms ease;
+    color: #999;
+    font-size: 0.9em;
+    margin-left: 0.5em;
+}
+.copy-hint.show {
+    opacity: 1;
 }

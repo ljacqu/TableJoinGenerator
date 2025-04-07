@@ -12,7 +12,8 @@ namespace QB {
                 case ColumnFilterType.NULL_FILTER:
                     return this.formatNullFilterForWhereClause(filter);
                 case ColumnFilterType.TIMESTAMP_INTERVAL:
-                    return this.formatIntervalFilterForWhereClause(filter);
+                case ColumnFilterType.NUMBER_COMPARISON:
+                    return filter.value; // already formatted
                 default:
                     throw new Error('Unhandled filter type: ' + filter.type);
             }
@@ -31,11 +32,6 @@ namespace QB {
                         + this.escapeValueForSqlAndHtml(filter.value)
                         + `'</span>`;
             }
-        }
-
-        private formatIntervalFilterForWhereClause(filter: ColumnFilter): string {
-            return filter.value
-                .replaceAll('INTERVAL', '<span class="sql-keyword">INTERVAL</span>');
         }
 
         private formatNullFilterForWhereClause(filter: ColumnFilter): string {
@@ -70,10 +66,7 @@ namespace QB {
                 case 'tinyint':
                 case 'decimal':
                 case 'number':
-                    if (value && value !== '!' && Number.isNaN(Number(value))) {
-                        throw new Error('Invalid number');
-                    }
-                    return ColumnFilter.plainFilter(table, column, value, tableAlias);
+                    return this.handleNumberFilter(table, column, value, tableAlias);
                 case 'timestamp':
                 case 'datetime':
                     return this.handleDateTimeValue(table, column, value);
@@ -95,19 +88,34 @@ namespace QB {
             const matches = value.trim().match(pattern);
             if (matches) {
                 const operator = matches[2] ?? '+';
-                const comparison = matches[1] ?? (operator === '+' ? '<' : '>');
+                const comparison = this.escapeValueForSqlAndHtml(matches[1] ?? (operator === '+' ? '<' : '>'));
                 const number = matches[3];
                 const unit = this.convertDateTimeUnit(matches[4]);
 
                 const expression = this.dbEngine === 'MySQL'
-                    ? `${comparison} NOW() ${operator} INTERVAL ${number} ${unit}`
-                    : `${comparison} sysdate ${operator} INTERVAL '${number}' ${unit}`; // Oracle
+                    ? `${comparison} NOW() ${operator} <span class="sql-keyword">INTERVAL</span> <span class="sql-number">${number}</span> <span class="sql-keyword">${unit}</span>`
+                    : `${comparison} sysdate ${operator} <span class="sql-keyword">INTERVAL</span> '<span class="sql-number">${number}</span>' <span class="sql-keyword">${unit}</span>`; // Oracle
 
                 return new ColumnFilter(table, column, ColumnFilterType.TIMESTAMP_INTERVAL,
                     expression, value, tableAlias);
             }
 
             throw Error('Invalid timestamp expression');
+        }
+
+        private handleNumberFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {
+            const pattern = /^(>|>=|=|<=|<|<>)\s*(-?(\d+)(\.\d+)?)$/;
+            const matches = value.trim().match(pattern);
+            if (matches) {
+                const comparison = this.escapeValueForSqlAndHtml(matches[1]);
+                const number = matches[2];
+                const formattedValue = `${comparison} <span class="sql-number">${number}</span>`;
+                return new ColumnFilter(table, column, ColumnFilterType.NUMBER_COMPARISON,
+                    formattedValue, value, tableAlias);
+            } else if (Number.isNaN(Number(value))) {
+                throw new Error('Invalid number');
+            }
+            return ColumnFilter.plainFilter(table, column, value, tableAlias);
         }
 
         private convertDateTimeUnit(unit: string): string {

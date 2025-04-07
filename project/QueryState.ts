@@ -229,7 +229,7 @@ namespace QB {
     }
 
     export type Query = {
-        /** Columns to select. Empty/undef. = SELECT * */
+        /** Columns to select. Empty/undef. = `SELECT *` */
         select?: Column[];
         /** Table to reference in the FROM section. */
         table: string;
@@ -267,7 +267,8 @@ namespace QB {
     export enum ColumnFilterType {
         PLAIN,
         TIMESTAMP_INTERVAL,
-        NULL_FILTER
+        NULL_FILTER,
+        NUMBER_COMPARISON
     }
 
     export type QueryLeftJoin = {

@@ -65,6 +65,7 @@ namespace QB {
 
                 const filterButton = DocElemHelper.newElemWithClass('button', 'filter');
                 filterButton.innerText = '🜄';
+                this.updateFilterButtonClasses(filterButton, col.table, col.column, col.manualAlias);
                 filterButton.title = 'Edit filters';
                 filterButton.addEventListener('click', () => {
                     const isAlreadyOpen = li.querySelector('ul') !== null;
@@ -150,7 +151,7 @@ namespace QB {
             inputElem.after(addBtn);
         }
 
-        private createFiltersSublist(colElem: HTMLElement, table: string, column: string, tableAlias?: string): void {
+        private createFiltersSublist(colElem: HTMLLIElement, table: string, column: string, tableAlias?: string): void {
             const ulElem = DocElemHelper.newElemWithClass('ul', 'where_input');
             const filters = this.queryService.getFilters(table, column, tableAlias);
             filters.forEach(filter => {
@@ -169,8 +170,7 @@ namespace QB {
                         this.queryService.updateQuery(query => {
                             query.replaceFilter(filter, newFilter);
                         });
-                        this.deleteAllWhereInputElements();
-                        this.createFiltersSublist(colElem, table, column, tableAlias);
+                        this.updateFiltersListAfterAction(colElem, table, column, tableAlias);
                     }
                 });
                 const delBtn = DocElemHelper.newElemWithText('button', 'Del');
@@ -178,8 +178,7 @@ namespace QB {
                     this.queryService.updateQuery(query => {
                         query.removeFilter(filter);
                     });
-                    this.deleteAllWhereInputElements();
-                    this.createFiltersSublist(colElem, table, column, tableAlias);
+                    this.updateFiltersListAfterAction(colElem, table, column, tableAlias);
                 });
 
                 if (filter.type === ColumnFilterType.NULL_FILTER) {
@@ -211,12 +210,35 @@ namespace QB {
                     this.queryService.updateQuery(query => {
                         query.addFilter(filter);
                     });
-                    this.deleteAllWhereInputElements();
-                    this.createFiltersSublist(colElem, table, column, tableAlias);
+                    this.updateFiltersListAfterAction(colElem, table, column, tableAlias);
                 }
             });
             ulElem.append(li);
             colElem.append(ulElem);
+        }
+
+        /**
+         * Reconstructs all filter inputs of a given column. `colElem` is the `<li>` item of the
+         * parent list, namely the list item for the column for which the filters are being added.
+         */
+        private updateFiltersListAfterAction(colElem: HTMLLIElement, table: string, column: string,
+                                             tableAlias?: string): void {
+            this.deleteAllWhereInputElements();
+            this.createFiltersSublist(colElem, table, column, tableAlias);
+            const filterButton = colElem.querySelector('button.filter');
+            if (filterButton) { // should always exist
+                this.updateFilterButtonClasses(filterButton, table, column, tableAlias);
+            }
+        }
+
+        private updateFilterButtonClasses(filterElem: Element, table: string, column: string,
+                                          tableAlias?: string): void {
+            const hasFilters = this.queryService.hasFilterOnColumn(table, column, tableAlias);
+            if (hasFilters) {
+                filterElem.classList.add('filter-has-entries');
+            } else {
+                filterElem.classList.remove('filter-has-entries');
+            }
         }
     }
 }

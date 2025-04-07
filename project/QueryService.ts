@@ -65,6 +65,15 @@ namespace QB {
             return this.query.hasAnyColumnSelect();
         }
 
+        hasFilterOnColumn(table: string, column: string, tableAlias?: string): boolean {
+            const filters = this.query.getQuery()?.where;
+            if (filters) {
+                return filters.some(filter => filter.table === table && filter.column === column
+                    && (!tableAlias && !filter.tableAlias || tableAlias === filter.tableAlias));
+            }
+            return false;
+        }
+
         getFilters(table: string, column: string, tableAlias?: string): ColumnFilter[] {
             const filters = this.query.getQuery()?.where;
             if (filters) {
@@ -75,7 +84,9 @@ namespace QB {
         }
 
         private updateQueryOnPage() {
-            DocElemHelper.getElementById('query').innerHTML = this.formatter.generateQuery(this.query.getQuery());
+            const queryHtml = this.formatter.generateQuery(this.query.getQuery());
+            DocElemHelper.getElementById('query').innerHTML = queryHtml;
+            DocElemHelper.getElementById('btn_copy').style.display = !!queryHtml ? 'inline-block' : 'none';
             if (this.configDebugEnabled) {
                 DocElemHelper.getElementById('query_debug').innerHTML =
                     JSON.stringify(this.query.getQuery()).replaceAll('{', '{ ');
