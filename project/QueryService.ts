@@ -84,11 +84,28 @@ namespace QB {
         }
 
         private updateQueryOnPage() {
-            DocElemHelper.getElementById('query').innerHTML = this.formatter.generateQuery(this.query.getQuery());
+            const queryElement = DocElemHelper.getElementById('query');
+            queryElement.innerHTML = this.formatter.generateQuery(this.query.getQuery());
+            this.addOnClickHandlersToQueryElem(queryElement);
             if (this.configDebugEnabled) {
                 DocElemHelper.getElementById('query_debug').innerHTML =
                     JSON.stringify(this.query.getQuery()).replaceAll('{', '{ ');
             }
+        }
+
+        private addOnClickHandlersToQueryElem(queryElem: HTMLElement): void {
+            queryElem.querySelectorAll('.lj').forEach(leftJoinElem => {
+                leftJoinElem.addEventListener('click', () => {
+                    this.updateQuery(query => {
+                        const sourceTable = (leftJoinElem as HTMLElement).dataset.srcTable as string;
+                        const targetTable = (leftJoinElem as HTMLElement).dataset.trgTable as string;
+                        const sourceAlias = (leftJoinElem as HTMLElement).dataset.srcAlias;
+                        const targetAlias = (leftJoinElem as HTMLElement).dataset.trgAlias;
+
+                        query.removeLeftJoin(sourceTable, targetTable, sourceAlias, targetAlias);
+                    });
+                });
+            });
         }
     }
 }

@@ -86,6 +86,17 @@ namespace QB {
             this.query!.leftJoin.push(leftJoin);
         }
 
+        removeLeftJoin(sourceTable: string, targetTable: string, sourceAlias?: string, targetAlias?: string): void {
+            if (this.query!.leftJoin) {
+                this.query!.leftJoin = this.query!.leftJoin.filter(leftJoin => {
+                    return leftJoin.sourceTable !== sourceTable
+                        || !(leftJoin.sourceTableAlias === sourceAlias)
+                        || leftJoin.targetTable !== targetTable
+                        || !(leftJoin.targetTableAlias === targetAlias)
+                });
+            }
+        }
+
         setAggregate(aggregate: boolean): void {
             this.query!.aggregate = aggregate;
         }
