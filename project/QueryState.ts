@@ -229,7 +229,7 @@ namespace QB {
     }
 
     export type Query = {
-        /** Columns to select. Empty/undef. = SELECT * */
+        /** Columns to select. Empty/undef. = `SELECT *` */
         select?: Column[];
         /** Table to reference in the FROM section. */
         table: string;
