@@ -94,8 +94,9 @@ namespace QB {
                       ? '    <span class="sql-keyword">OR</span> '
                       : '   <span class="sql-keyword">AND</span> ';
                     const sqlForFilters = filterGroup.columnFilters.map(filter => {
-                        return this.formatColumn(filter.table, filter.column, useColNameWithTable, filter.tableAlias)
-                            + ' ' + this.sqlTypeHandler.formatFilterForWhereClause(filter);
+                        const formattedColumn = this.formatColumn(
+                            filter.table, filter.column, useColNameWithTable, filter.tableAlias);
+                        return this.sqlTypeHandler.formatFilterForWhereClause(filter, formattedColumn);
                     }).join(nlIndent + filterDelimiter);
 
                     if (filterGroup.columnFilters.length === 1) {
