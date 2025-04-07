@@ -30,6 +30,13 @@ namespace QB {
                 });
             });
 
+            const hint = DocElemHelper.getElementById('copied_hint');
+            DocElemHelper.getElementById('btn_copy').addEventListener('click', () => {
+                navigator.clipboard.writeText(DocElemHelper.getElementById('query').innerText);
+                hint.classList.add('show');
+                setTimeout(() => hint.classList.remove('show'), 800); // matches the fade duration in CSS
+            });
+
             // Initialization
             menuHandler.showInitialTables();
             DocElemHelper.getElementById('version').innerText = `v. ${__version}`;

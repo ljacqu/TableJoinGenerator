@@ -84,7 +84,9 @@ namespace QB {
         }
 
         private updateQueryOnPage() {
-            DocElemHelper.getElementById('query').innerHTML = this.formatter.generateQuery(this.query.getQuery());
+            const queryHtml = this.formatter.generateQuery(this.query.getQuery());
+            DocElemHelper.getElementById('query').innerHTML = queryHtml;
+            DocElemHelper.getElementById('btn_copy').style.display = !!queryHtml ? 'inline-block' : 'none';
             if (this.configDebugEnabled) {
                 DocElemHelper.getElementById('query_debug').innerHTML =
                     JSON.stringify(this.query.getQuery()).replaceAll('{', '{ ');
