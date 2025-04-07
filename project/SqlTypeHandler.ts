@@ -5,15 +5,17 @@ namespace QB {
         constructor(private dbEngine: string) {
         }
 
-        formatFilterForWhereClause(filter: ColumnFilter): string {
+        formatFilterForWhereClause(filter: ColumnFilter, formattedColumn: string): string {
             switch (filter.type) {
                 case ColumnFilterType.PLAIN:
-                    return this.formatValueForWhereClause(filter);
+                    return formattedColumn + ' ' + this.formatValueForWhereClause(filter);
                 case ColumnFilterType.NULL_FILTER:
-                    return this.formatNullFilterForWhereClause(filter);
+                    return formattedColumn + ' ' + this.formatNullFilterForWhereClause(filter);
                 case ColumnFilterType.TIMESTAMP_INTERVAL:
                 case ColumnFilterType.NUMBER_COMPARISON:
-                    return filter.value; // already formatted
+                    return formattedColumn + ' ' + filter.value; // already formatted
+                case ColumnFilterType.TIMESTAMP_DATE_FILTER:
+                    return this.formatTimestampDateFilter(filter, formattedColumn);
                 default:
                     throw new Error('Unhandled filter type: ' + filter.type);
             }
@@ -100,7 +102,32 @@ namespace QB {
                     expression, value, tableAlias);
             }
 
+            // Match a date like 2025-03-15, with or without an operator
+            const datePattern = /^(>|>=|=|<=|<|<>)?\s*(\d{4}-\d{2}-\d{2})$/;
+            const dateMatches = value.trim().match(datePattern);
+            if (dateMatches) {
+                const operator = dateMatches[1] ?? '=';
+                const date = dateMatches[2];
+
+                // MySQL: DATE(col) = '2025-03-14'
+                // Oracle: TRUNC(col) = TO_DATE('2025-03-14', 'YYYY-MM-DD')
+                const dateFormatted = this.dbEngine === 'MySQL'
+                    ? `'<span class='sql-text'>${date}</span>'`
+                    : `<span class="sql-keyword">TO_DATE</span>('<span class="sql-text">${date}</span>', '<span class="sql-text">YYYY-MM-DD</span>')`; // Oracle
+                return new ColumnFilter(table, column, ColumnFilterType.TIMESTAMP_DATE_FILTER, operator + ' ' + dateFormatted,
+                    value, tableAlias);
+            }
+
             throw Error('Invalid timestamp expression');
+        }
+
+        private formatTimestampDateFilter(filter: ColumnFilter, formattedColumn: string): string {
+            // It would be more performant to do this, but means needing to calculate the next date:
+            // WHERE created_at >= '2025-04-07'
+            //   AND created_at <  '2025-04-08';
+
+            const functionName = this.dbEngine === 'MySQL' ? 'DATE' : 'TRUNC';
+            return `<span class="sql-keyword">${functionName}</span>(${formattedColumn}) ${filter.value}`;
         }
 
         private handleNumberFilter(table: string, column: string, value: string, tableAlias?: string): ColumnFilter {

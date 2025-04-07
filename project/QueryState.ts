@@ -267,6 +267,7 @@ namespace QB {
     export enum ColumnFilterType {
         PLAIN,
         TIMESTAMP_INTERVAL,
+        TIMESTAMP_DATE_FILTER,
         NULL_FILTER,
         NUMBER_COMPARISON
     }
